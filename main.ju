@@ -1,0 +1,12 @@
+package main
+
+func main() {
+    a := 2 * 3
+    b := "Hi!"
+    c := !false
+    parse(a, 3)
+}
+
+func parse(a int, b int) []int {
+    return (a + b) * 2
+}
