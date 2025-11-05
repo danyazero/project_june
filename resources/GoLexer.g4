@@ -69,6 +69,11 @@ SWITCH      : 'switch';
 TYPE        : 'type';
 VAR         : 'var';
 
+CLASS       : 'class';
+EXTENDS     : ':';
+IMPLEMENTS  : '<';
+PERMITS     : 'permits';
+
 IDENTIFIER: LETTER (LETTER | UNICODE_DIGIT)* -> mode(NLSEMI);
 
 // Punctuation

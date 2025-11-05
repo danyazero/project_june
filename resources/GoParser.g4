@@ -40,7 +40,23 @@ options {
 }
 
 sourceFile
-    : packageClause eos (importDecl eos)* ((functionDecl | methodDecl | declaration) eos)* EOF
+    : packageClause eos (importDecl eos)* classDeclaration EOF
+    ;
+
+classDeclaration
+    : CLASS identifier (EXTENDS type_)? (IMPLEMENTS typeList)? (
+        PERMITS typeList
+    )?
+    classBody
+    ;
+
+classBody
+    : L_CURLY classBodyDeclaration* R_CURLY
+    ;
+
+classBodyDeclaration
+    : SEMI
+    | (functionDecl | methodDecl | declaration) eos
     ;
 
 packageClause

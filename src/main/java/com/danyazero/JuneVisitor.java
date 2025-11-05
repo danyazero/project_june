@@ -10,6 +10,11 @@ import java.util.List;
 
 public class JuneVisitor extends GoParserBaseVisitor<String> {
     @Override
+    public String visitSourceFile(GoParser.SourceFileContext ctx) {
+        return visitClassDeclaration(ctx.classDeclaration());
+    }
+
+    @Override
     public String visitBlock(GoParser.BlockContext ctx) {
         var arr = new ArrayList<String>();
         for (var s : ctx.statementList().statement()) {
@@ -17,6 +22,47 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
         }
         return Arrays.toString(arr.toArray());
     }
+
+    @Override
+    public String visitClassBodyDeclaration(GoParser.ClassBodyDeclarationContext ctx) {
+        if (ctx.functionDecl() != null) {
+            return visit(ctx.functionDecl());
+        } else if (ctx.methodDecl() != null) {
+            return visit(ctx.methodDecl());
+        } else if (ctx.declaration() != null) {
+            return visit(ctx.declaration());
+        }
+
+        throw new RuntimeException("Illegal ClassBodyDeclaration");
+    }
+
+    @Override
+    public String visitClassDeclaration(GoParser.ClassDeclarationContext ctx) {
+        // 1️⃣ Class name
+        String name = ctx.identifier().getText();
+
+        var members = new ArrayList<String>();
+        for (var el : ctx.classBody().classBodyDeclaration()) {
+            members.add(visit(el));
+        }
+        var membersString = "[\n" + String.join(",\n", members) + "\n]";
+        // 2️⃣ Super types (implements / extends)
+        List<String> implementsTypes = new ArrayList<>();
+        if (ctx.IMPLEMENTS() != null) {
+            for (var typeCtx : ctx.typeList(0).type_()) {
+                    String typeName = typeCtx.typeName().getText();
+                    implementsTypes.add(String.format("Type { name=%s }", typeName));
+            }
+
+            return String.format("Object {name=%s , implements=%s, extends=null, members=%s}", name, Arrays.toString(implementsTypes.toArray()), membersString);
+        } else if (ctx.EXTENDS() != null) {
+            System.out.println();
+            return String.format("Object {name=%s , implements=[], extends=%s, members=%s }", name, ctx.type_().typeName().getText(), membersString);
+        }
+
+        return String.format("Object {name=%s }", name);
+    }
+
 
     @Override
     public String visitFunctionDecl(GoParser.FunctionDeclContext ctx) {
@@ -34,7 +80,7 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
 
 
         var res = String.format("Function { name=%s, params=%s block=%s }", ctx.IDENTIFIER().getText(), Arrays.toString(params.toArray()), visit(ctx.block()));
-        System.out.println(res);
+//        System.out.println(res);
 
         return res;
     }
@@ -56,11 +102,6 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
     @Override
     public String visitExpressionStmt(GoParser.ExpressionStmtContext ctx) {
         return String.format("Statement { text=%s }", ctx.getText().replace("\"", ""));
-    }
-
-    @Override
-    public String visitSourceFile(GoParser.SourceFileContext ctx) {
-        return super.visitSourceFile(ctx);
     }
 
     @Override

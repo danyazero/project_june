@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 .kotlin
 *.class
+gen
 .idea
 resources/JavaParserParts.g4
 src/main/java/june
