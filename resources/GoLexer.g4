@@ -70,14 +70,16 @@ TYPE        : 'type';
 VAR         : 'var';
 
 CLASS       : 'class';
+PUBLIC      : 'pub';
 EXTENDS     : ':';
 IMPLEMENTS  : '<';
-PERMITS     : 'permits';
+QMARK       : '?';
 
 IDENTIFIER: LETTER (LETTER | UNICODE_DIGIT)* -> mode(NLSEMI);
 
 // Punctuation
 
+AT             : '@';
 L_PAREN        : '(';
 R_PAREN        : ')' -> mode(NLSEMI);
 L_CURLY        : '{';

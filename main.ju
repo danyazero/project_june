@@ -1,14 +1,24 @@
 package main
 
-class Main : Function {
+@Getter(value="hi", name="e")
+pub class Main : Function {
+    const d [][]int = 12 * 2
+    @Setter(value="hi!")
+    @Getter
+    const e string = "E constant"
+    const m bool = false
+
     func main() {
         a := 2 * 3
+        if a > 5 {
+            a -= 5 * 2;
+        }
         b := "Hi!"
         c := !false
-        parse(a, 3)
+        d := 2.53
     }
 
     func parse(a int, b int) []int {
-        return (a + b) * 2
+        return (a + b) << 1
     }
 }

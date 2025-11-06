@@ -16,9 +16,9 @@ public class Main {
     public static void main(String[] args) throws IOException {
 //        System.out.println(Arrays.toString(args));
 
-
         buildTree(args[0]);
 
+//        createTestClass();
     }
 
     private static void buildTree(String file) throws IOException {
@@ -27,11 +27,8 @@ public class Main {
         GoLexer lexer = new GoLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         GoParser parser = new GoParser(tokens);
-
-        // Parse starting from 'sourceFile' rule (main entry point)
         ParseTree tree = parser.sourceFile();
 
-        // Print the parse tree as a string
         System.out.println(tree.toStringTree(parser));
         System.out.println();
 
@@ -45,7 +42,6 @@ public class Main {
         ClassWriter cw = new ClassWriter(0);
         cw.visit(V17, ACC_PUBLIC, "Hello", null, "java/lang/Object", null);
 
-        // Конструктор
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
@@ -54,14 +50,18 @@ public class Main {
         mv.visitMaxs(1, 1);
         mv.visitEnd();
 
-        // Метод main
         mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null);
         mv.visitCode();
+        mv.visitIntInsn(BIPUSH, 12);
+        mv.visitInsn(ICONST_2);
+        mv.visitInsn(INEG);
+        mv.visitInsn(IADD);
+        mv.visitVarInsn(ISTORE, 1);
         mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-        mv.visitLdcInsn("Hello, world!");
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+        mv.visitVarInsn(ILOAD, 1);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
         mv.visitInsn(RETURN);
-        mv.visitMaxs(2, 1);
+        mv.visitMaxs(2, 2);
         mv.visitEnd();
 
         cw.visitEnd();

@@ -40,14 +40,53 @@ options {
 }
 
 sourceFile
-    : packageClause eos (importDecl eos)* classDeclaration EOF
+    : packageClause eos (importDecl eos)* objectDeclaration EOF
     ;
 
 classDeclaration
-    : CLASS identifier (EXTENDS type_)? (IMPLEMENTS typeList)? (
-        PERMITS typeList
-    )?
+    : CLASS identifier (EXTENDS type_)? (IMPLEMENTS typeList)?
     classBody
+    ;
+
+objectDeclaration
+    : classOrInterfaceModifier* (
+        classDeclaration
+    )
+    ;
+
+classOrInterfaceModifier
+    : annotation EOS?
+    | PUBLIC
+    ;
+
+annotation
+    : normalAnnotation
+    ;
+
+normalAnnotation
+    : AT typeName (L_PAREN elementValuePairList R_PAREN)?
+    ;
+
+elementValuePairList
+    : elementValuePair (',' elementValuePair)*
+    ;
+
+elementValuePair
+    : identifier '=' elementValue
+    ;
+
+elementValue
+    : elementValueArrayInitializer
+    |  basicLit
+    | annotation
+    ;
+
+elementValueArrayInitializer
+    : '{' elementValueList? ','? '}'
+    ;
+
+elementValueList
+    : elementValue (',' elementValue)*
     ;
 
 classBody
@@ -88,7 +127,7 @@ declaration
     ;
 
 constDecl
-    : CONST (constSpec | L_PAREN (constSpec eos)* R_PAREN)
+    : (annotation EOS?)* CONST (constSpec | L_PAREN (constSpec eos)* R_PAREN)
     ;
 
 constSpec
@@ -341,17 +380,12 @@ typeName
 
 typeLit
     : arrayType
-    | structType
-    | pointerType
     | functionType
     | interfaceType
-    | sliceType
-    | mapType
-    | channelType
     ;
 
 arrayType
-    : L_BRACKET arrayLength R_BRACKET elementType
+    : L_BRACKET R_BRACKET elementType
     ;
 
 arrayLength
@@ -370,18 +404,8 @@ interfaceType
     : INTERFACE L_CURLY ((methodSpec | typeElement) eos)* R_CURLY
     ;
 
-sliceType
-    : L_BRACKET R_BRACKET elementType
-    ;
 
 // It's possible to replace `type` with more restricted typeLit list and also pay attention to nil maps
-mapType
-    : MAP L_BRACKET type_ R_BRACKET elementType
-    ;
-
-channelType
-    : ({this.isNotReceive()}? CHAN | CHAN RECEIVE | RECEIVE CHAN) elementType
-    ;
 
 methodSpec
     : IDENTIFIER parameters result
@@ -479,11 +503,10 @@ compositeLit
     ;
 
 literalType
-    : structType
+    : classDeclaration
     | arrayType
     | L_BRACKET ELLIPSIS R_BRACKET elementType
-    | sliceType
-    | mapType
+    | arrayType
     | typeName typeArgs?
     ;
 
@@ -507,14 +530,6 @@ key
 element
     : expression
     | literalValue
-    ;
-
-structType
-    : STRUCT L_CURLY (fieldDecl eos)* R_CURLY
-    ;
-
-fieldDecl
-    : (identifierList type_ | embeddedField) tag = string_?
     ;
 
 string_
