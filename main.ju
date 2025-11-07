@@ -1,20 +1,19 @@
 package main
 
-@Getter(value="hi", name="e")
+@Getter
+@Setter
 pub class Main : Function {
     const d [][]int = 12 * 2
-    @Setter(value="hi!")
-    @Getter
     const e string = "E constant"
-    const m bool = false
+    var m bool = false
 
     func main() {
-        a := 2 * 3
+        a := (128 + 38299) * 3
         if a > 5 {
             a -= 5 * 2;
         }
         b := "Hi!"
-        c := !false
+        c := !false && a >= 7
         d := 2.53
     }
 

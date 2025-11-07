@@ -29,38 +29,88 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
             return visit(ctx.functionDecl());
         } else if (ctx.methodDecl() != null) {
             return visit(ctx.methodDecl());
-        } else if (ctx.declaration() != null) {
-            return visit(ctx.declaration());
+        } else if (ctx.classFields() != null) {
+            return visit(ctx.classFields());
         }
 
         throw new RuntimeException("Illegal ClassBodyDeclaration");
     }
 
     @Override
-    public String visitClassDeclaration(GoParser.ClassDeclarationContext ctx) {
-        String name = ctx.identifier().getText();
+    public String visitObjectDeclaration(GoParser.ObjectDeclarationContext ctx) {
+        String name = ctx.classDeclaration().identifier().getText();
+
 
         var members = new ArrayList<String>();
-        for (var el : ctx.classBody().classBodyDeclaration()) {
+        for (var el : ctx.classDeclaration().classBody().classBodyDeclaration()) {
             members.add(visit(el));
         }
         var membersString = "[\n" + String.join(",\n", members) + "\n]";
 
         List<String> implementsTypes = new ArrayList<>();
-        if (ctx.IMPLEMENTS() != null) {
-            for (var typeCtx : ctx.typeList().type_()) {
-                    implementsTypes.add(visitType_(typeCtx));
+        if (ctx.classDeclaration().IMPLEMENTS() != null) {
+            for (var typeCtx : ctx.classDeclaration().typeList().type_()) {
+                implementsTypes.add(visitType_(typeCtx));
             }
 
-            return String.format("Object {name=%s , implements=%s, extends=null, members=%s}", name, Arrays.toString(implementsTypes.toArray()), membersString);
-        } else if (ctx.EXTENDS() != null) {
-            System.out.println();
-            return String.format("Object {name=%s , implements=[], extends=%s, members=%s }", name, ctx.type_().typeName().getText(), membersString);
+            return String.format(
+                    "Class { annotations=%s, name=%s, implements=%s, extends=null, members=%s}",
+                    visitAnnotationList(ctx.annotationList()),
+                    name,
+                    Arrays.toString(implementsTypes.toArray()),
+                    membersString
+            );
+        } else if (ctx.classDeclaration().EXTENDS() != null) {
+            return String.format(
+                    "Class { annotations=%s, name=%s , implements=[], extends=%s, members=%s }",
+                    visitAnnotationList(ctx.annotationList()),
+                    name,
+                    ctx.classDeclaration().type_().typeName().getText(),
+                    membersString
+            );
         }
+
 
         return String.format("Object {name=%s }", name);
     }
 
+    @Override
+    public String visitModifier(GoParser.ModifierContext ctx) {
+            if (ctx.PUBLIC() != null) {
+                return "PUBLIC";
+            }
+
+            throw new RuntimeException("Illegal Modifier");
+    }
+
+    @Override
+    public String visitStructDecl(GoParser.StructDeclContext ctx) {
+        ctx.IDENTIFIER();
+        return super.visitStructDecl(ctx);
+    }
+
+    @Override
+    public String visitAnnotation(GoParser.AnnotationContext ctx) {
+
+        var params = new ArrayList<String>();
+        if (ctx.normalAnnotation().elementValuePairList() != null) {
+            for (var param : ctx.normalAnnotation().elementValuePairList().elementValuePair()) {
+                params.add(String.format("Pair { name=%s, value=%s }", param.identifier(), visit(param.elementValue().basicLit())));
+            }
+        }
+
+        return String.format("Annotation { name=%s, values=%s }", ctx.normalAnnotation().typeName().IDENTIFIER(), Arrays.toString(params.toArray()));
+    }
+
+    @Override
+    public String visitAnnotationList(GoParser.AnnotationListContext ctx) {
+        var annotations = new ArrayList<String>();
+        for (var annotation : ctx.annotation()) {
+            annotations.add(visitAnnotation(annotation));
+        }
+
+        return Arrays.toString(annotations.toArray());
+    }
 
     @Override
     public String visitType_(GoParser.Type_Context ctx) {
@@ -166,6 +216,16 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
     public String visitConstSpec(GoParser.ConstSpecContext ctx) {
         return String.format(
                 "Const { name=%s, type=%s, value=%s }",
+                ctx.identifierList().getText(),
+                visitType_(ctx.type_()),
+                visitExpression(ctx.expressionList().expression(0))
+        );
+    }
+
+    @Override
+    public String visitVarSpec(GoParser.VarSpecContext ctx) {
+        return String.format(
+                "Variable { name=%s, type=%s, value=%s }",
                 ctx.identifierList().getText(),
                 visitType_(ctx.type_()),
                 visitExpression(ctx.expressionList().expression(0))

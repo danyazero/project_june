@@ -1,5 +1,8 @@
 package com.danyazero;
 
+import com.danyazero.model.Operation;
+import com.danyazero.model.ast.ExpressionImpl;
+import com.danyazero.model.ast.Value;
 import june.GoLexer;
 import june.GoParser;
 import org.antlr.v4.runtime.CharStreams;
@@ -16,9 +19,9 @@ public class Main {
     public static void main(String[] args) throws IOException {
 //        System.out.println(Arrays.toString(args));
 
-        buildTree(args[0]);
+//        buildTree(args[0]);
 
-//        createTestClass();
+        createTestClass();
     }
 
     private static void buildTree(String file) throws IOException {
@@ -50,18 +53,23 @@ public class Main {
         mv.visitMaxs(1, 1);
         mv.visitEnd();
 
+        // ((38298 / 6) + 128) * 3 = 19 533
+        var expression0 = new ExpressionImpl(Operation.DIVISION, Value.newIntegerValue(38298), Value.newIntegerValue(6));
+        var expression1 = new ExpressionImpl(Operation.ADDITION, Value.newIntegerValue(128), expression0);
+        var expression = new ExpressionImpl(Operation.MULTIPLICATION, Value.newIntegerValue(3), expression1);
+
         mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null);
         mv.visitCode();
-        mv.visitIntInsn(BIPUSH, 12);
-        mv.visitInsn(ICONST_2);
-        mv.visitInsn(INEG);
-        mv.visitInsn(IADD);
-        mv.visitVarInsn(ISTORE, 1);
+        expression.produce(mv);
+
+        mv.visitIntInsn(ISTORE, 1);
+
         mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-        mv.visitVarInsn(ILOAD, 1);
+        mv.visitIntInsn(ILOAD, 1);
+
         mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
         mv.visitInsn(RETURN);
-        mv.visitMaxs(2, 2);
+        mv.visitMaxs(4, 2);
         mv.visitEnd();
 
         cw.visitEnd();

@@ -48,15 +48,24 @@ classDeclaration
     classBody
     ;
 
+classFields
+    : annotationList modifier* (
+        constDecl
+        | varDecl
+    )
+    ;
 objectDeclaration
-    : classOrInterfaceModifier* (
+    : annotationList modifier* (
         classDeclaration
     )
     ;
 
-classOrInterfaceModifier
-    : annotation EOS?
-    | PUBLIC
+annotationList
+    : (annotation EOS?)*
+    ;
+
+modifier
+    : PUBLIC
     ;
 
 annotation
@@ -78,15 +87,14 @@ elementValuePair
 elementValue
     : elementValueArrayInitializer
     |  basicLit
-    | annotation
     ;
 
 elementValueArrayInitializer
-    : '{' elementValueList? ','? '}'
+    : L_CURLY elementValueList? COMMA? R_CURLY
     ;
 
 elementValueList
-    : elementValue (',' elementValue)*
+    : elementValue (COMMA elementValue)*
     ;
 
 classBody
@@ -95,7 +103,7 @@ classBody
 
 classBodyDeclaration
     : SEMI
-    | (functionDecl | methodDecl | declaration) eos
+    | (functionDecl | methodDecl | classFields | structDecl) eos
     ;
 
 packageClause
@@ -122,7 +130,7 @@ importPath
 
 declaration
     : constDecl
-    | typeDecl
+    | structDecl
     | varDecl
     ;
 
@@ -142,8 +150,11 @@ expressionList
     : expression (COMMA expression)*
     ;
 
-typeDecl
-    : TYPE (typeSpec | L_PAREN (typeSpec eos)* R_PAREN)
+structDecl
+    : modifier? STRUCT IDENTIFIER L_CURLY (fieldDecl eos)* R_CURLY
+    ;
+fieldDecl
+    : (identifierList type_ | embeddedField) tag = string_?
     ;
 
 typeSpec
