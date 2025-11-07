@@ -1,17 +1,16 @@
-package com.danyazero.model.ast;
+package com.danyazero.utils;
 
 import com.danyazero.model.NumberType;
 import com.danyazero.model.Operation;
 import com.danyazero.model.Type;
-import org.objectweb.asm.MethodVisitor;
 
-public class ExpressionImpl implements Expression, Operand {
-    private final Expression left;
-    private final Expression right;
+public class Expression implements com.danyazero.model.ast.Expression {
+    private final com.danyazero.model.ast.Expression left;
+    private final com.danyazero.model.ast.Expression right;
     private final Operation op;
-    private final Type type;
+    private final Type<?> type;
 
-    public ExpressionImpl(Operation op, Expression left, Expression right) {
+    public Expression(Operation op, com.danyazero.model.ast.Expression left, com.danyazero.model.ast.Expression right) {
         this.op = op;
         this.left = left;
         this.right = right;
@@ -20,34 +19,35 @@ public class ExpressionImpl implements Expression, Operand {
 
 
     @Override
-    public void produce(MethodVisitor mv) {
-        if (right instanceof ExpressionImpl) {
-            right.produce(mv);
-            left.produce(mv);
+    public void produce(GenerationContext ctx) {
+        System.out.println("Expression.produce");
+        if (right instanceof Expression) {
+            right.produce(ctx);
+            left.produce(ctx);
         } else {
-            left.produce(mv);
-            right.produce(mv);
+            left.produce(ctx);
+            right.produce(ctx);
         }
 
         switch (op) {
             case ADDITION -> {
                 if (type instanceof NumberType<?> numberType) {
-                    numberType.add(mv);
+                    numberType.add(ctx.getMethodVisitor());
                 }
             }
             case SUBSTRUCTION -> {
                 if (type instanceof NumberType<?> numberType) {
-                    numberType.sub(mv);
+                    numberType.sub(ctx.getMethodVisitor());
                 }
             }
             case MULTIPLICATION -> {
                 if (type instanceof NumberType<?> numberType) {
-                    numberType.mul(mv);
+                    numberType.mul(ctx.getMethodVisitor());
                 }
             }
             case DIVISION -> {
                 if (type instanceof NumberType<?> numberType) {
-                    numberType.div(mv);
+                    numberType.div(ctx.getMethodVisitor());
                 }
             }
         }
@@ -71,10 +71,10 @@ public class ExpressionImpl implements Expression, Operand {
 
     }
 
-    private Type getExpressionType(Expression expression) {
+    private Type<?> getExpressionType(com.danyazero.model.ast.Expression expression) {
         if (expression instanceof Value<?>) {
             return expression.getType();
-        } else if (expression instanceof ExpressionImpl) {
+        } else if (expression instanceof Expression) {
             return expression.getType();
         } else {
             throw new RuntimeException("Cannot extract expression type");

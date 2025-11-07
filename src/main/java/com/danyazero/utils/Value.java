@@ -1,11 +1,11 @@
-package com.danyazero.model.ast;
+package com.danyazero.utils;
 
 import com.danyazero.model.NumberType;
 import com.danyazero.model.Type;
-import com.danyazero.model.number.IntegerType;
+import com.danyazero.model.ast.Expression;
 import org.objectweb.asm.MethodVisitor;
 
-public class Value<T> implements Expression, Operand {
+public class Value<T> implements Expression {
     private final T value;
     private final Type<T> type;
 
@@ -19,9 +19,9 @@ public class Value<T> implements Expression, Operand {
     }
 
     @Override
-    public void produce(MethodVisitor mv) {
+    public void produce(GenerationContext ctx) {
         if (this.type instanceof NumberType<?>) {
-            this.type.postack(mv, this.value);
+            this.type.postack(ctx.getMethodVisitor(), this.value);
         } else {
             throw  new UnsupportedOperationException("Cannot emmit type " + this.type);
         }

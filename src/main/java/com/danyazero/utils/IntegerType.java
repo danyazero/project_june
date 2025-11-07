@@ -1,4 +1,4 @@
-package com.danyazero.model.number;
+package com.danyazero.utils;
 
 import com.danyazero.model.NumberType;
 import org.objectweb.asm.MethodVisitor;
@@ -54,9 +54,8 @@ public class IntegerType implements NumberType<Integer> {
     }
 
     @Override
-    public void store(MethodVisitor mv) {
-        //TODO
-
+    public void store(MethodVisitor mv, short index) {
+        mv.visitVarInsn(ISTORE, index);
     }
 
     @Override
@@ -67,5 +66,10 @@ public class IntegerType implements NumberType<Integer> {
     @Override
     public void yield(MethodVisitor mv) {
         mv.visitInsn(IRETURN);
+    }
+
+    @Override
+    public short getSize() {
+        return 1;
     }
 }

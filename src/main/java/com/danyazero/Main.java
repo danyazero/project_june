@@ -1,8 +1,7 @@
 package com.danyazero;
 
 import com.danyazero.model.Operation;
-import com.danyazero.model.ast.ExpressionImpl;
-import com.danyazero.model.ast.Value;
+import com.danyazero.utils.*;
 import june.GoLexer;
 import june.GoParser;
 import org.antlr.v4.runtime.CharStreams;
@@ -53,23 +52,31 @@ public class Main {
         mv.visitMaxs(1, 1);
         mv.visitEnd();
 
-        // ((38298 / 6) + 128) * 3 = 19 533
-        var expression0 = new ExpressionImpl(Operation.DIVISION, Value.newIntegerValue(38298), Value.newIntegerValue(6));
-        var expression1 = new ExpressionImpl(Operation.ADDITION, Value.newIntegerValue(128), expression0);
-        var expression = new ExpressionImpl(Operation.MULTIPLICATION, Value.newIntegerValue(3), expression1);
-
         mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null);
         mv.visitCode();
-        expression.produce(mv);
 
-        mv.visitIntInsn(ISTORE, 1);
 
+        var generationContext = new GenerationContext(mv);
+
+        // ((38298 / 6) + 128) * 3 = 19 533
+        var expression0 = new Expression(Operation.DIVISION, Value.newIntegerValue(38298), Value.newIntegerValue(6));
+        var expression1 = new Expression(Operation.ADDITION, Value.newIntegerValue(128), expression0);
+        var expression2 = new Expression(Operation.MULTIPLICATION, Value.newIntegerValue(3), expression1);
+        var expression3 = new Variable("a", new IntegerType(), expression2);
+
+        expression3.produce(generationContext);
+
+        mv = generationContext.getMethodVisitor();
+
+//        mv.visitIntInsn(ISTORE, 1);
+        var variableInfo = generationContext.resolveVariable("a");
+//
         mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-        mv.visitIntInsn(ILOAD, 1);
-
+        mv.visitIntInsn(ILOAD, variableInfo.localIndex());
+//
         mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
         mv.visitInsn(RETURN);
-        mv.visitMaxs(4, 2);
+        mv.visitMaxs(4, 4);
         mv.visitEnd();
 
         cw.visitEnd();
