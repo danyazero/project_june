@@ -66,35 +66,22 @@ public class Main {
         var expression0 = new Expression(Operation.DIVISION, Value.of(38298), Value.of(6));
         var expression1 = new Expression(Operation.ADDITION, Value.of(128), expression0);
         var expression2 = new Expression(Operation.MULTIPLICATION, Value.of(3), expression1);
-        var expression3 = new Variable("a", new IntegerType(), expression2);
-
-//        var method = new MethodInvoke("System.out.println", List.of(Value.newIntValue(1)));
-        var method = new MethodInvoke("System.out.printf", List.of(Value.of("Hello, %s"), Value.of("World!")));
-
-//        method.produce(generationContext);
-//        expression3.produce(generationContext);
-
 
 
         var slice = new Slice(List.of(
-                expression0,
-                Value.of(4),
-                Value.of(5)
+                expression2,
+                Value.of(2),
+                Value.of(3)
         ));
         var sliceVar = new Variable("a", new ArrayType(new IntegerType()), slice);
         var sliceElementVar = new Variable("b", new IntegerType(), new SliceElement(new Operand("a"), Value.of(0)));
+        var method = new MethodInvoke("System.out.println", List.of(new Operand("b")));
 
         sliceVar.produce(generationContext);
         sliceElementVar.produce(generationContext);
+        method.produce(generationContext);
 
         mv = generationContext.getMethodVisitor();
-
-        var variableInfo = generationContext.resolveVariable("b");
-
-        mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-        mv.visitIntInsn(ILOAD, variableInfo.localIndex());
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
-
 
 //        mv.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "toString", "([I)Ljava/lang/String;", false);
 //        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
@@ -106,7 +93,7 @@ public class Main {
 //        mv.visitIntInsn(ILOAD, variableInfo.localIndex());
 //        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
         mv.visitInsn(RETURN);
-        mv.visitMaxs(5, 5);
+        mv.visitMaxs(5, 3);
         mv.visitEnd();
 
         cw.visitEnd();

@@ -35,8 +35,8 @@ public class MethodInvoke implements Node {
         } else {
             throw new RuntimeException("Unknown method invoke descriptor");
         }
-        ctx.getMethodVisitor().visitFieldInsn(GETSTATIC, targetClass.replaceAll("\\.", "/"), methodParts[1], descriptor);
+        ctx.getMethodVisitor().visitFieldInsn(GETSTATIC, targetClass.replaceAll("\\.", "/"), methodParts[1], descriptor.replaceAll("\\.", "/"));
         arguments.forEach(argument -> argument.produce(ctx));
-        ctx.getMethodVisitor().visitMethodInsn(INVOKEVIRTUAL, fields.getFirst().getType().getTypeName().replaceAll("\\.", "/"), methodParts[methodParts.length-1], "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintStream;", false);
+        ctx.getMethodVisitor().visitMethodInsn(INVOKEVIRTUAL, fields.getFirst().getType().getTypeName().replaceAll("\\.", "/"), methodParts[methodParts.length-1], "(I)V", false);
     }
 }

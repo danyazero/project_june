@@ -1,25 +1,8 @@
 package main
 
-@Getter
-@Setter
 pub class Main : Function {
-    const d [][]int = 12 * 2
-    const e string = "E constant"
-    var m bool = false
-
     func main() {
-        mm[4]
-        mm := [4, 5, 6, 7]
         a := (128 + 38299) * 3
-        if a > 5 {
-            a -= 5 * 2;
-        }
-        b := "Hi!"
-        c := !false && a >= 7
-        d := 2.53
-    }
-
-    func parse(a int, b int) []int {
-        return (a + b) << 1
+        System.out.println(a)
     }
 }
