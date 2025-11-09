@@ -33,6 +33,11 @@ public class IntegerType implements NumberType<Integer> {
     }
 
     @Override
+    public int getType() {
+        return T_INT;
+    }
+
+    @Override
     public void postack(MethodVisitor mv, java.lang.Integer value) {
         if (value >= -1 && value <= 5) {
             switch (value) {
@@ -59,13 +64,23 @@ public class IntegerType implements NumberType<Integer> {
     }
 
     @Override
-    public void load(MethodVisitor mv) {
-        //TODO
+    public void load(MethodVisitor mv, short index) {
+        mv.visitIntInsn(ILOAD, index);
     }
 
     @Override
     public void yield(MethodVisitor mv) {
         mv.visitInsn(IRETURN);
+    }
+
+    @Override
+    public void aload(MethodVisitor mv) {
+        mv.visitInsn(IALOAD);
+    }
+
+    @Override
+    public void astore(MethodVisitor mv) {
+        mv.visitInsn(IASTORE);
     }
 
     @Override

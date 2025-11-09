@@ -8,6 +8,8 @@ pub class Main : Function {
     var m bool = false
 
     func main() {
+        mm[4]
+        mm := [4, 5, 6, 7]
         a := (128 + 38299) * 3
         if a > 5 {
             a -= 5 * 2;

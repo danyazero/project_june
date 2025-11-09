@@ -1,3 +1,3 @@
 package com.danyazero.model;
 
-public record VariableInfo(String name, Type<?> type, int localIndex) { }
+public record VariableInfo(String name, Type<?> type, short localIndex) { }

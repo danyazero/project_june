@@ -11,13 +11,13 @@ import org.objectweb.asm.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import static org.objectweb.asm.Opcodes.*;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-//        System.out.println(Arrays.toString(args));
-
 //        buildTree(args[0]);
 
         createTestClass();
@@ -55,28 +55,58 @@ public class Main {
         mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null);
         mv.visitCode();
 
+        var imports = Map.ofEntries(
+                Map.entry("System", "java.lang.System"),
+                Map.entry("String", "java.lang.String")
+        );
 
-        var generationContext = new GenerationContext(mv);
+        var generationContext = new GenerationContext(mv, imports);
 
         // ((38298 / 6) + 128) * 3 = 19 533
-        var expression0 = new Expression(Operation.DIVISION, Value.newIntegerValue(38298), Value.newIntegerValue(6));
-        var expression1 = new Expression(Operation.ADDITION, Value.newIntegerValue(128), expression0);
-        var expression2 = new Expression(Operation.MULTIPLICATION, Value.newIntegerValue(3), expression1);
+        var expression0 = new Expression(Operation.DIVISION, Value.of(38298), Value.of(6));
+        var expression1 = new Expression(Operation.ADDITION, Value.of(128), expression0);
+        var expression2 = new Expression(Operation.MULTIPLICATION, Value.of(3), expression1);
         var expression3 = new Variable("a", new IntegerType(), expression2);
 
-        expression3.produce(generationContext);
+//        var method = new MethodInvoke("System.out.println", List.of(Value.newIntValue(1)));
+        var method = new MethodInvoke("System.out.printf", List.of(Value.of("Hello, %s"), Value.of("World!")));
+
+//        method.produce(generationContext);
+//        expression3.produce(generationContext);
+
+
+
+        var slice = new Slice(List.of(
+                expression0,
+                Value.of(4),
+                Value.of(5)
+        ));
+        var sliceVar = new Variable("a", new ArrayType(new IntegerType()), slice);
+        var sliceElementVar = new Variable("b", new IntegerType(), new SliceElement(new Operand("a"), Value.of(0)));
+
+        sliceVar.produce(generationContext);
+        sliceElementVar.produce(generationContext);
 
         mv = generationContext.getMethodVisitor();
 
-//        mv.visitIntInsn(ISTORE, 1);
-        var variableInfo = generationContext.resolveVariable("a");
-//
+        var variableInfo = generationContext.resolveVariable("b");
+
         mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
         mv.visitIntInsn(ILOAD, variableInfo.localIndex());
-//
         mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
+
+
+//        mv.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "toString", "([I)Ljava/lang/String;", false);
+//        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+
+//        mv.visitIntInsn(ISTORE, 1);
+//        var variableInfo = generationContext.resolveVariable("a");
+//
+//        mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+//        mv.visitIntInsn(ILOAD, variableInfo.localIndex());
+//        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
         mv.visitInsn(RETURN);
-        mv.visitMaxs(4, 4);
+        mv.visitMaxs(5, 5);
         mv.visitEnd();
 
         cw.visitEnd();

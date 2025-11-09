@@ -446,6 +446,7 @@ parameterDecl
 
 expression
     : primaryExpr
+    | shortSliceDecl
     | unary_op = (PLUS | MINUS | EXCLAMATION | CARET | STAR | AMPERSAND | RECEIVE) expression
     | expression mul_op = (STAR | DIV | MOD | LSHIFT | RSHIFT | AMPERSAND | BIT_CLEAR) expression
     | expression add_op = (PLUS | MINUS | OR | CARET) expression
@@ -465,7 +466,7 @@ primaryExpr :
     ( {this.isOperand()}? operand
     | {this.isConversion()}? conversion
     | {this.isMethodExpr()}? methodExpr )
-    ( DOT IDENTIFIER | index | slice_ | typeAssertion | arguments )*
+    ( DOT IDENTIFIER | index | typeAssertion | arguments )*
     ;
 
 conversion
@@ -517,7 +518,7 @@ literalType
     : classDeclaration
     | arrayType
     | L_BRACKET ELLIPSIS R_BRACKET elementType
-    | arrayType
+//    | arrayType
     | typeName typeArgs?
     ;
 
@@ -560,8 +561,16 @@ index
     : L_BRACKET expression R_BRACKET
     ;
 
+shortSliceDecl
+    : L_BRACKET literalList R_BRACKET
+    ;
+
+literalList
+    : literal (','+ literal) *
+    ;
+
 slice_
-    : L_BRACKET (expression? COLON expression? | expression? COLON expression COLON expression) R_BRACKET
+    : L_BRACKET (expression? COLON expression?) R_BRACKET
     ;
 
 typeAssertion

@@ -6,8 +6,8 @@ import com.danyazero.model.VariableInfo;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.lang.reflect.Field;
+import java.util.*;
 
 public class GenerationContext {
     private final MethodVisitor mv;
@@ -15,6 +15,7 @@ public class GenerationContext {
 
     private final GenerationContext parent;
     private final Deque<Scope> scopes = new ArrayDeque<>();
+    private final Map<String, String> imports;
     private short nextLocalIndex;
 
     public GenerationContext(GenerationContext parent, MethodVisitor mv) {
@@ -22,20 +23,23 @@ public class GenerationContext {
         this.cw = parent.cw;
         this.mv = mv;
         scopes.push(new Scope());
+        this.imports = new HashMap<>();
     }
 
-    public GenerationContext(MethodVisitor mv) {
+    public GenerationContext(MethodVisitor mv, Map<String, String> imports) {
         this.parent = null;
         this.cw = null;
         this.mv = mv;
         scopes.push(new Scope());
+        this.imports = imports;
     }
 
-    public GenerationContext(ClassWriter cw) {
+    public GenerationContext(ClassWriter cw, Map<String, String> imports) {
         this.mv = null;
         this.parent = null;
         this.cw = cw;
         scopes.push(new Scope());
+        this.imports = imports;
     }
 
     public void enterScope() {
@@ -70,6 +74,39 @@ public class GenerationContext {
         nextLocalIndex += type.getSize();
 
         return index;
+    }
+
+    public void addImport(String importName) {
+        var simpleName = importName.split("\\.");
+        var lastToken = simpleName.length - 1;
+
+        this.imports.put(importName, simpleName[lastToken]);
+    }
+
+    public String resolveImport(String importName) {
+        if (imports.containsKey(importName)) return imports.get(importName);
+
+        return this.resolveCoreImport(importName)
+                .orElseThrow(() -> new RuntimeException("No such import: " + importName));
+    }
+
+    private Optional<String> resolveCoreImport(String importName) {
+        try {
+            return Optional.of(
+                    Class.forName("java.lang." + importName).toString()
+            );
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    public Field resolveClassField(String className, String fieldName) {
+
+        try {
+            return Class.forName(className).getField(fieldName);
+        } catch (Exception e) {
+            throw new RuntimeException("An error occurred while trying to resolve " + className + "." + fieldName, e);
+        }
     }
 
     public MethodVisitor getMethodVisitor() {

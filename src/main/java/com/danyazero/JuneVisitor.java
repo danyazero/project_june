@@ -209,7 +209,7 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
 
     @Override
     public String visitExpressionStmt(GoParser.ExpressionStmtContext ctx) {
-        return String.format("Statement { text=%s }", ctx.getText().replace("\"", ""));
+        return visitChildren(ctx);
     }
 
     @Override
@@ -271,11 +271,12 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
         if (ctx.unary_op != null) {
             String op = ctx.unary_op.getText();
             String inner = visitExpression(ctx.expression(0));
-            return String.format("UnaryOperation { operation=%s, inner=%s }", op, inner);
-        }
 
-        if (ctx.primaryExpr() != null) {
+            return String.format("UnaryOperation { operation=%s, inner=%s }", op, inner);
+        } else if (ctx.primaryExpr() != null) {
             return visitPrimaryExpr(ctx.primaryExpr());
+        } else if (ctx.shortSliceDecl() != null) {
+            return visitShortSliceDecl(ctx.shortSliceDecl());
         }
 
         throw new RuntimeException("Unhandled expression: " + ctx.getText());
@@ -326,7 +327,38 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
     }
 
     @Override
+    public String visitArguments(GoParser.ArgumentsContext ctx) {
+        var arguments = new ArrayList<String>();
+        for (var el : ctx.expressionList().expression()) {
+            arguments.add(visitExpression(el));
+        }
+        return String.format("Arguments { arguments=%s }", arguments);
+    }
+
+    @Override
     public String visitPrimaryExpr(GoParser.PrimaryExprContext ctx) {
+        if (ctx.methodExpr() != null) {
+            var object = ctx.methodExpr().type_().typeName().getText();
+            var method = ctx.methodExpr().IDENTIFIER().getText();
+
+            var arguments = new ArrayList<String>();
+            for (var argument : ctx.arguments()) {
+                arguments.add(visitArguments(argument));
+            }
+
+            return String.format(
+                    "MethodInvoke { method=%s, params=%s }",
+                    object + "." + method,
+                    Arrays.toString(arguments.toArray())
+            );
+        } else if (ctx.operand() != null && ctx.index() != null && !ctx.index().isEmpty()) {
+            return String.format(
+                    "SliceElement { name=%s, index=%s }",
+                    visit(ctx.operand()),
+                    visit(ctx.index(0).expression().primaryExpr())
+            );
+        }
+
         return visitChildren(ctx);
     }
 
@@ -357,6 +389,20 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
 
         System.out.println("Unhandled literal: " + ctx.getText());
         return null;
+    }
+
+    @Override
+    public String visitShortSliceDecl(GoParser.ShortSliceDeclContext ctx) {
+        var items = new ArrayList<String>();
+        for (var item : ctx.literalList().literal()) {
+            items.add(visit(item));
+        }
+
+        return String.format(
+                "Slice { items=%s, size=%d }",
+                Arrays.toString(items.toArray()),
+                items.size()
+        );
     }
 
     private static String getType(String type) {

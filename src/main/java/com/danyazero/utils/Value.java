@@ -1,11 +1,10 @@
 package com.danyazero.utils;
 
-import com.danyazero.model.NumberType;
 import com.danyazero.model.Type;
 import com.danyazero.model.ast.Expression;
-import org.objectweb.asm.MethodVisitor;
+import com.danyazero.model.ast.IValue;
 
-public class Value<T> implements Expression {
+public class Value<T> implements Expression, IValue {
     private final T value;
     private final Type<T> type;
 
@@ -14,17 +13,17 @@ public class Value<T> implements Expression {
         this.type = type;
     }
 
-    public static Value<Integer> newIntegerValue(Integer value) {
+    public static Value<Integer> of(Integer value) {
         return new Value<>(value, new IntegerType());
+    }
+
+    public static Value<String> of(String value) {
+        return new Value<>(value, new StringType());
     }
 
     @Override
     public void produce(GenerationContext ctx) {
-        if (this.type instanceof NumberType<?>) {
-            this.type.postack(ctx.getMethodVisitor(), this.value);
-        } else {
-            throw  new UnsupportedOperationException("Cannot emmit type " + this.type);
-        }
+        this.type.postack(ctx.getMethodVisitor(), this.value);
     }
 
     @Override

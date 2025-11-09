@@ -1,6 +1,5 @@
 package com.danyazero.utils;
 
-import com.danyazero.model.Type;
 import com.danyazero.model.Variable;
 import com.danyazero.model.VariableInfo;
 
