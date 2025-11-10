@@ -1,5 +1,8 @@
 package com.danyazero;
 
+import com.danyazero.model.Operation;
+import com.danyazero.model.ast.*;
+import com.danyazero.utils.*;
 import june.GoParser;
 import june.GoParserBaseVisitor;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -8,25 +11,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class JuneVisitor extends GoParserBaseVisitor<String> {
+public class JuneVisitor extends GoParserBaseVisitor<Node> {
     @Override
-    public String visitSourceFile(GoParser.SourceFileContext ctx) {
-        return visit(ctx.objectDeclaration());
+    public Node visitSourceFile(GoParser.SourceFileContext ctx) {
+        return visitObjectDeclaration(ctx.objectDeclaration());
     }
 
     @Override
-    public String visitBlock(GoParser.BlockContext ctx) {
-        var arr = new ArrayList<String>();
+    public NodeList visitBlock(GoParser.BlockContext ctx) {
+        var statementList = new ArrayList<Node>();
         for (var s : ctx.statementList().statement()) {
-            arr.add(visit(s));
+            statementList.add(visit(s));
         }
-        return Arrays.toString(arr.toArray());
+
+        return new NodeList(statementList);
     }
 
     @Override
-    public String visitClassBodyDeclaration(GoParser.ClassBodyDeclarationContext ctx) {
+    public Node visitClassBodyDeclaration(GoParser.ClassBodyDeclarationContext ctx) {
         if (ctx.functionDecl() != null) {
-            return visit(ctx.functionDecl());
+            return visitFunctionDecl(ctx.functionDecl());
         } else if (ctx.methodDecl() != null) {
             return visit(ctx.methodDecl());
         } else if (ctx.classFields() != null) {
@@ -37,60 +41,45 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
     }
 
     @Override
-    public String visitObjectDeclaration(GoParser.ObjectDeclarationContext ctx) {
+    public JuneClass visitObjectDeclaration(GoParser.ObjectDeclarationContext ctx) {
         String name = ctx.classDeclaration().identifier().getText();
 
 
-        var members = new ArrayList<String>();
+        var members = new ArrayList<Node>();
         for (var el : ctx.classDeclaration().classBody().classBodyDeclaration()) {
-            members.add(visit(el));
+            members.add(visitClassBodyDeclaration(el));
         }
-        var membersString = "[\n" + String.join(",\n", members) + "\n]";
 
-        List<String> implementsTypes = new ArrayList<>();
+//        var implementsTypes = new ArrayList<Node>();
         if (ctx.classDeclaration().IMPLEMENTS() != null) {
-            for (var typeCtx : ctx.classDeclaration().typeList().type_()) {
-                implementsTypes.add(visitType_(typeCtx));
-            }
+//            for (var typeCtx : ctx.classDeclaration().typeList().type_()) {
+//                implementsTypes.add(visitType_(typeCtx));
+//            }
 
-            return String.format(
-                    "Class { annotations=%s, name=%s, implements=%s, extends=null, members=%s}",
-                    visitAnnotationList(ctx.annotationList()),
-                    name,
-                    Arrays.toString(implementsTypes.toArray()),
-                    membersString
-            );
+            return new JuneClass(name, members);
+
+//            visitAnnotationList(ctx.annotationList()), // Way to get annotation list
+//            Arrays.toString(implementsTypes.toArray()), // Way to get types which this class implements
         } else if (ctx.classDeclaration().EXTENDS() != null) {
-            return String.format(
-                    "Class { annotations=%s, name=%s , implements=[], extends=%s, members=%s }",
-                    visitAnnotationList(ctx.annotationList()),
-                    name,
-                    ctx.classDeclaration().type_().typeName().getText(),
-                    membersString
-            );
+            return new JuneClass(name, members);
+//            ctx.classDeclaration().type_().typeName().getText(), //Way to get type which this class extends
         }
 
 
-        return String.format("Object { annotations=%s, name=%s, implements=[], extends=[], members=%s }", visit(ctx.annotationList()), name, membersString);
+        return new JuneClass(name, members);
     }
 
     @Override
-    public String visitModifier(GoParser.ModifierContext ctx) {
+    public Node visitModifier(GoParser.ModifierContext ctx) {
         if (ctx.PUBLIC() != null) {
-            return "PUBLIC";
+            return null; //TODO Provide modifier support
         }
 
         throw new RuntimeException("Illegal Modifier");
     }
 
     @Override
-    public String visitStructDecl(GoParser.StructDeclContext ctx) {
-        ctx.IDENTIFIER();
-        return super.visitStructDecl(ctx);
-    }
-
-    @Override
-    public String visitAnnotation(GoParser.AnnotationContext ctx) {
+    public Node visitAnnotation(GoParser.AnnotationContext ctx) {
 
         var params = new ArrayList<String>();
         if (ctx.normalAnnotation().elementValuePairList() != null) {
@@ -99,24 +88,28 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
             }
         }
 
-        return String.format("Annotation { name=%s, values=%s }", ctx.normalAnnotation().typeName().IDENTIFIER(), Arrays.toString(params.toArray()));
+//        return String.format("Annotation { name=%s, values=%s }", ctx.normalAnnotation().typeName().IDENTIFIER(), Arrays.toString(params.toArray()));
+        throw new RuntimeException("Not implemented yet."); //TODO Annotation visitor
     }
 
     @Override
-    public String visitAnnotationList(GoParser.AnnotationListContext ctx) {
-        var annotations = new ArrayList<String>();
-        for (var annotation : ctx.annotation()) {
-            annotations.add(visitAnnotation(annotation));
-        }
+    public Node visitAnnotationList(GoParser.AnnotationListContext ctx) {
+        throw new RuntimeException("Not implemented yet."); //TODO Annotation list
 
-        return Arrays.toString(annotations.toArray());
+//        var annotations = new ArrayList<Node>();
+//        for (var annotation : ctx.annotation()) {
+//            annotations.add(visitAnnotation(annotation));
+//        }
+
+//        return Arrays.toString(annotations.toArray());
     }
 
     @Override
-    public String visitType_(GoParser.Type_Context ctx) {
+    public TypeNode visitType_(GoParser.Type_Context ctx) {
         if (ctx.typeName() != null) {
             var typeObj = getType(ctx.typeName().getText());
-            return String.format("Type { name=%s }", typeObj);
+
+            return new TypeNode(typeObj);
         } else if (ctx.typeLit() != null) {
             return visitTypeLit(ctx.typeLit());
         }
@@ -125,21 +118,27 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
     }
 
     @Override
-    public String visitTypeLit(GoParser.TypeLitContext ctx) {
+    public TypeNode visitTypeLit(GoParser.TypeLitContext ctx) {
         if (ctx.arrayType() != null) {
-            return String.format("Array { value=%s }", visitType_(ctx.arrayType().elementType().type_()));
+            var type = visitType_(ctx.arrayType().elementType().type_());
+            if (type instanceof TypeNode typeNode) {
+                return new TypeNode(new ArrayType(typeNode.getType()));
+            }
+
+            throw new RuntimeException("Incorrect type format");
         }
+
         throw new RuntimeException("Illegal Lit Type");
     }
 
     @Override
-    public String visitReturnStmt(GoParser.ReturnStmtContext ctx) {
-        return String.format("ReturnStmt { expression=%s }", visit(ctx.expressionList()));
+    public ReturnStatement visitReturnStmt(GoParser.ReturnStmtContext ctx) {
+        return new ReturnStatement(visit(ctx.expressionList()));
     }
 
     @Override
-    public String visitSignature(GoParser.SignatureContext ctx) {
-        var resultParameters = new ArrayList<String>();
+    public TypeList visitSignature(GoParser.SignatureContext ctx) {
+        var resultParameters = new ArrayList<TypeNode>();
         if (ctx.result() != null) {
             if (ctx.result().type_() != null) {
                 var type = visitType_(ctx.result().type_());
@@ -152,133 +151,140 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
             }
         }
 
-        return Arrays.toString(resultParameters.toArray());
+        return new TypeList(resultParameters);
     }
 
     @Override
-    public String visitFunctionDecl(GoParser.FunctionDeclContext ctx) {
-        List<String> params = new ArrayList<>();
+    public Method visitFunctionDecl(GoParser.FunctionDeclContext ctx) {
+        List<MethodParameter> params = new ArrayList<>();
         if (ctx.signature() != null) {
             var paramCtx = ctx.signature().parameters();
             if (paramCtx != null) {
                 for (var p : paramCtx.parameterDecl()) {
                     String paramName = p.identifierList().getText();
-                    String type = p.type_() != null ? p.type_().getText() : "any";
-                    params.add(String.format("Param { name=%s, type=%s }", paramName, getType(type)));
+//                    String type = p.type_() != null ?  : ;
+                    var parameter = new MethodParameter(paramName, visitType_(p.type_()).getType());
+                    params.add(parameter);
                 }
             }
         }
 
-        return String.format(
-                "Function { name=%s, params=%s block=%s, result=%s }",
+        return new Method(
                 ctx.IDENTIFIER().getText(),
-                Arrays.toString(params.toArray()),
-                visit(ctx.block()),
-                visitSignature(ctx.signature())
+                params,
+                visitBlock(ctx.block()).getStatements(),
+                visitSignature(ctx.signature()).getStatements()
         );
     }
 
     @Override
-    public String visitStatementList(GoParser.StatementListContext ctx) {
-        var blocks = new ArrayList<String>();
+    public Node visitStatementList(GoParser.StatementListContext ctx) {
+        var blocks = new ArrayList<Node>();
         for (var el : ctx.statement()) {
             blocks.add(visit(el));
         }
 
-        return Arrays.toString(blocks.toArray());
+//        return Arrays.toString(blocks.toArray());
+        return null;
     }
 
+    //TODO Fix visitIfStatement method
+//    @Override
+//    public Node visitIfStmt(GoParser.IfStmtContext ctx) {
+//        var statementExpression = visitExpression(ctx.expression());
+//
+//        var statementBlock = new ArrayList<String>();
+//        for (var block : ctx.block()) {
+//            statementBlock.add(visit(block.statementList()));
+//        }
+//
+//
+//        return String.format("IfStmt { expression=%s , block=%s }", statementExpression, Arrays.toString(statementBlock.toArray()));
+//    }
+
+
     @Override
-    public String visitIfStmt(GoParser.IfStmtContext ctx) {
-        var statementExpression = visitExpression(ctx.expression());
+    public Node visitShortVarDecl(GoParser.ShortVarDeclContext ctx) {
+        var expression = visitExpression(ctx.expressionList().expression(0));
 
-        var statementBlock = new ArrayList<String>();
-        for (var block : ctx.block()) {
-            statementBlock.add(visit(block.statementList()));
-        }
-
-
-        return String.format("IfStmt { expression=%s , block=%s }", statementExpression, Arrays.toString(statementBlock.toArray()));
-    }
-
-
-    @Override
-    public String visitShortVarDecl(GoParser.ShortVarDeclContext ctx) {
-        return String.format(
-                "Variable { name=%s, value=%s }",
+        return new Variable(
                 ctx.identifierList().getText(),
-                visitExpression(ctx.expressionList().expression(0))
+                expression.getType(),
+                expression
         );
     }
 
     @Override
-    public String visitExpressionStmt(GoParser.ExpressionStmtContext ctx) {
+    public Node visitExpressionStmt(GoParser.ExpressionStmtContext ctx) {
         return visitChildren(ctx);
     }
 
     @Override
-    public String visitConstSpec(GoParser.ConstSpecContext ctx) {
-        return String.format(
-                "Const { name=%s, type=%s, value=%s }",
+    public Node visitConstSpec(GoParser.ConstSpecContext ctx) {
+        throw new RuntimeException("Not implemented yet."); //TODO Implement constant variable
+//        return String.format(
+//                "Const { name=%s, type=%s, value=%s }",
+//                ctx.identifierList().getText(),
+//                visitType_(ctx.type_()),
+//                visitExpression(ctx.expressionList().expression(0))
+//        );
+    }
+
+    @Override
+    public Node visitVarSpec(GoParser.VarSpecContext ctx) {
+
+        return new Variable(
                 ctx.identifierList().getText(),
-                visitType_(ctx.type_()),
+                visitType_(ctx.type_()).getType(),
                 visitExpression(ctx.expressionList().expression(0))
         );
     }
 
     @Override
-    public String visitVarSpec(GoParser.VarSpecContext ctx) {
-        return String.format(
-                "Variable { name=%s, type=%s, value=%s }",
-                ctx.identifierList().getText(),
-                visitType_(ctx.type_()),
-                visitExpression(ctx.expressionList().expression(0))
-        );
-    }
-
-    @Override
-    public String visitOperand(GoParser.OperandContext ctx) {
+    public Expression visitOperand(GoParser.OperandContext ctx) {
         if (ctx.literal() != null) {
-            return visit(ctx.literal());
+            return visitLiteral(ctx.literal());
         } else if (ctx.operandName() != null) {
             if (ctx.operandName().getText().equals("true") || ctx.operandName().getText().equals("false")) {
-                return String.format("Value { value=%s, type=Bool {  } }", ctx.operandName().getText());
+                return new Value<>(Boolean.parseBoolean(ctx.operandName().getText()), new BooleanType());
             }
-            return String.format("Operand { name=%s }", ctx.operandName().getText());
+
+            return new Operand(ctx.operandName().getText());
         } else if (ctx.expression() != null) {
             return visitExpression(ctx.expression());
         }
-        ;
 
-        return null;
+        throw new RuntimeException("Provided wrong expression or operand");
     }
 
     @Override
-    public String visitExpression(GoParser.ExpressionContext ctx) {
+    public Expression visitExpression(GoParser.ExpressionContext ctx) {
         if (ctx.expression().size() == 2) {
-            String left = visitExpression(ctx.expression(0));
-            String right = visitExpression(ctx.expression(1));
-            String op = null;
+            var left = visitExpression(ctx.expression(0));
+            var right = visitExpression(ctx.expression(1));
+            Operation op = null;
 
             for (ParseTree child : ctx.children) {
                 String text = child.getText();
                 if (!text.isBlank() && !text.equals("(") && !text.equals(")")) {
                     if (!(child instanceof GoParser.ExpressionContext)) {
-                        op = text;
+                        op = Operation.fromString(text);
                         break;
                     }
                 }
             }
 
-            return String.format("Expression { left=%s, op=%s, right=%s }", left, op, right);
+            return new ExpressionNode(op, left, right);
         }
 
         if (ctx.unary_op != null) {
             String op = ctx.unary_op.getText();
-            String inner = visitExpression(ctx.expression(0));
+            var inner = visitExpression(ctx.expression(0));
 
-            return String.format("UnaryOperation { operation=%s, inner=%s }", op, inner);
+            throw new RuntimeException("Not implemented yet."); //TODO Implement Unary operation processing
+//            return String.format("UnaryOperation { operation=%s, inner=%s }", op, inner);
         } else if (ctx.primaryExpr() != null) {
+//            throw new RuntimeException("Not implemented yet."); //TODO Implement primaryExpression
             return visitPrimaryExpr(ctx.primaryExpr());
         } else if (ctx.shortSliceDecl() != null) {
             return visitShortSliceDecl(ctx.shortSliceDecl());
@@ -288,134 +294,131 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
     }
 
     @Override
-    public String visitAssignment(GoParser.AssignmentContext ctx) {
+    public Node visitAssignment(GoParser.AssignmentContext ctx) {
         var operation = ctx.assign_op();
-        System.out.println(operation.ASSIGN() + " " + operation.PLUS() + " " + operation.MINUS());
-        if (operation.ASSIGN() != null) {
-            var left = visit(ctx.expressionList(0).expression(0));
-            var right = visit(ctx.expressionList(1).expression(0));
+        throw new RuntimeException("Not implemented yet."); //TODO Implement assignment
 
-            if (operation.PLUS() != null) {
-                var increment = String.format("Increment { operand=%s, value=%s }", left, right);
-
-                return String.format("Assignment { operand=%s, expr=%s }", left, increment);
-            } else if (operation.MINUS() != null) {
-                var increment = String.format("Increment { operand=%s, value=Negate { value=%s } }", left, right);
-
-                return String.format("Assignment { operand=%s, expr=%s }", left, increment);
-            } else if (operation.STAR() != null) {
-                var multiplication = String.format("Expression { left=%s, op=*, right=%s}", left, right);
-
-                return String.format("Assignment { operand=%s, expr=%s }", left, multiplication);
-            } else if (operation.DIV() != null) {
-                var division = String.format("Expression { left=%s, op=/, right=%s}", left, right);
-
-                return String.format("Assignment { operand=%s, expr=%s }", left, division);
-            } else if (operation.MOD() != null) {
-                var mod = String.format("Expression { left=%s, op=%%, right=%s}", left, right);
-
-                return String.format("Assignment { operand=%s, expr=%s }", left, mod);
-            } else if (operation.RSHIFT() != null) {
-                var rightShift = String.format("Expression { left=%s, op=>>, right=%s}", left, right);
-
-                return String.format("Assignment { operand=%s, expr=%s }", left, rightShift);
-            } else if (operation.LSHIFT() != null) {
-                var leftShift = String.format("Expression { left=%s, op=<<, right=%s}", left, right);
-
-                return String.format("LShiftAssignment { operand=%s, expr=%s }", left, leftShift);
-            } else {
-                return String.format("Assignment { operand=%s, expr=%s }", left, right);
-            }
-        }
-
-        throw new RuntimeException("Unhandled assignment: " + ctx.getText());
+//        if (operation.ASSIGN() != null) {
+//            var left = visit(ctx.expressionList(0).expression(0));
+//            var right = visit(ctx.expressionList(1).expression(0));
+//
+//            if (operation.PLUS() != null) {
+//                var increment = String.format("Increment { operand=%s, value=%s }", left, right);
+//
+//                return String.format("Assignment { operand=%s, expr=%s }", left, increment);
+//            } else if (operation.MINUS() != null) {
+//                var increment = String.format("Increment { operand=%s, value=Negate { value=%s } }", left, right);
+//
+//                return String.format("Assignment { operand=%s, expr=%s }", left, increment);
+//            } else if (operation.STAR() != null) {
+//                var multiplication = String.format("Expression { left=%s, op=*, right=%s}", left, right);
+//
+//                return String.format("Assignment { operand=%s, expr=%s }", left, multiplication);
+//            } else if (operation.DIV() != null) {
+//                var division = String.format("Expression { left=%s, op=/, right=%s}", left, right);
+//
+//                return String.format("Assignment { operand=%s, expr=%s }", left, division);
+//            } else if (operation.MOD() != null) {
+//                var mod = String.format("Expression { left=%s, op=%%, right=%s}", left, right);
+//
+//                return String.format("Assignment { operand=%s, expr=%s }", left, mod);
+//            } else if (operation.RSHIFT() != null) {
+//                var rightShift = String.format("Expression { left=%s, op=>>, right=%s}", left, right);
+//
+//                return String.format("Assignment { operand=%s, expr=%s }", left, rightShift);
+//            } else if (operation.LSHIFT() != null) {
+//                var leftShift = String.format("Expression { left=%s, op=<<, right=%s}", left, right);
+//
+//                return String.format("LShiftAssignment { operand=%s, expr=%s }", left, leftShift);
+//            } else {
+//                return String.format("Assignment { operand=%s, expr=%s }", left, right);
+//            }
+//        }
+//
+//        throw new RuntimeException("Unhandled assignment: " + ctx.getText());
     }
 
     @Override
-    public String visitArguments(GoParser.ArgumentsContext ctx) {
-        var arguments = new ArrayList<String>();
+    public ExpressionList visitArguments(GoParser.ArgumentsContext ctx) {
+        var arguments = new ArrayList<Expression>();
         for (var el : ctx.expressionList().expression()) {
             arguments.add(visitExpression(el));
         }
-        return String.format("Arguments { arguments=%s }", arguments);
+        return new ExpressionList(arguments);
     }
 
     @Override
-    public String visitPrimaryExpr(GoParser.PrimaryExprContext ctx) {
+    public Expression visitPrimaryExpr(GoParser.PrimaryExprContext ctx) {
         if (ctx.methodExpr() != null) {
             var object = ctx.methodExpr().type_().typeName().getText();
             var method = ctx.methodExpr().IDENTIFIER().getText();
 
-            var arguments = new ArrayList<String>();
+            var arguments = new ArrayList<ExpressionList>();
             for (var argument : ctx.arguments()) {
                 arguments.add(visitArguments(argument));
             }
+            System.out.println("Method arguments: " + arguments);
 
-            return String.format(
-                    "MethodInvoke { method=%s, params=%s }",
+//            throw new RuntimeException("Method expression not implemented yet");
+
+            return new MethodInvoke(
                     object + "." + method,
-                    Arrays.toString(arguments.toArray())
+                    arguments.getFirst().getExpressions()
             );
+//            return String.format(
+//                    "MethodInvoke { method=%s, params=%s }",
+//                    object + "." + method,
+//                    Arrays.toString(arguments.toArray())
+//            );
         } else if (ctx.operand() != null && ctx.index() != null && !ctx.index().isEmpty()) {
-            return String.format(
-                    "SliceElement { name=%s, index=%s }",
-                    visit(ctx.operand()),
-                    visit(ctx.index(0).expression().primaryExpr())
+            return new SliceElement(
+                    visitOperand(ctx.operand()),
+                    visitOperand(ctx.index(0).expression().primaryExpr().operand())
             );
         }
 
-        return visitChildren(ctx);
+        return (Expression) visitChildren(ctx);
+//        throw new RuntimeException("This kind of primary expression is not supported");
     }
 
     @Override
-    public String visitInteger(GoParser.IntegerContext ctx) {
-        return ctx.getText();
-    }
-
-    @Override
-    public String visitBasicLit(GoParser.BasicLitContext ctx) {
-        return String.format("BasicLiteral { value=%s }", visitChildren(ctx));
-    }
-
-    @Override
-    public String visitLiteral(GoParser.LiteralContext ctx) {
+    public Value<?> visitLiteral(GoParser.LiteralContext ctx) {
         if (ctx.basicLit() != null) {
             if (ctx.basicLit().string_() != null) {
                 String raw = ctx.basicLit().string_().getText();
                 String value = raw.substring(1, raw.length() - 1);
 
-                return String.format("Value { value=%s, type=String {  } }", value);
+                return new Value<>(value, new StringType());
             } else if (ctx.basicLit().integer() != null) {
-                return String.format("Value { value=%s, type=Integer {  } }", ctx.basicLit().integer().getText());
+                return new Value<>(Integer.parseInt(ctx.basicLit().integer().getText()), new IntegerType());
             } else if (ctx.basicLit().getText().contains(".")) {
-                return String.format("Value { value=%s, type=Double {  } }", ctx.basicLit().getText());
+                return new Value<>(Double.parseDouble(ctx.basicLit().getText()), new DoubleType());
             }
         }
 
-        System.out.println("Unhandled literal: " + ctx.getText());
-        return null;
+        throw new RuntimeException("Unhandled literal: " + ctx.getText());
     }
 
     @Override
-    public String visitShortSliceDecl(GoParser.ShortSliceDeclContext ctx) {
-        var items = new ArrayList<String>();
+    public Expression visitShortSliceDecl(GoParser.ShortSliceDeclContext ctx) {
+        var items = new ArrayList<Expression>();
         for (var item : ctx.literalList().expression()) {
-            items.add(visit(item));
+            items.add(visitExpression(item));
         }
 
-        return String.format(
-                "Slice { items=%s, size=%d }",
-                Arrays.toString(items.toArray()),
-                items.size()
-        );
+        return new Slice(items);
     }
 
-    private static String getType(String type) {
-        return switch (type) {
-            case "int" -> "Integer {  }";
-            case "bool" -> "Bool {  }";
-            case "string" -> "String {  }";
-            default -> "Object {  }";
+    private static com.danyazero.model.Type<?> getType(String type) {
+        System.out.println("getType(" + type + ");");
+        var res = switch (type) {
+            case "int" -> new IntegerType();
+            case "bool" -> new BooleanType();
+            case "string" -> new StringType();
+            default -> new ObjectType(null); //TODO Provide correct object name
         };
+        System.out.println("return " + res.getClass());
+
+        return res;
     }
 }

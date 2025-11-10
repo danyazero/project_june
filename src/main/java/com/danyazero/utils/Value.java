@@ -27,7 +27,20 @@ public class Value<T> implements Expression, IValue {
     }
 
     @Override
+    public void resolveTypes(GenerationContext ctx) {
+
+    }
+
+    @Override
     public Type<?> getType() {
         return type;
+    }
+
+    @Override
+    public String toString() {
+        return "Value{" +
+                "value=" + value +
+                ", type=" + type +
+                '}';
     }
 }

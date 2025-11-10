@@ -6,7 +6,7 @@ import com.danyazero.model.ast.Node;
 
 public class Variable implements com.danyazero.model.Variable, Node {
     private final String name;
-    private final Type<?> type;
+    private Type<?> type;
     private final Expression value;
 
     public Variable(String name, Type<?> type, Expression value) {
@@ -18,8 +18,16 @@ public class Variable implements com.danyazero.model.Variable, Node {
     @Override
     public void produce(GenerationContext ctx) {
         value.produce(ctx);
-        var variableIndex = ctx.defineVariable(name, type);
-        type.store(ctx.getMethodVisitor(), variableIndex);
+        var variableIndex = ctx.getMethodContext().resolveVariable(name);
+        type.store(ctx.getMethodVisitor(), variableIndex.localIndex());
+    }
+
+    @Override
+    public void resolveTypes(GenerationContext ctx) {
+        value.resolveTypes(ctx);
+        ctx.getMethodContext().defineVariable(name, value.getType());
+        type = value.getType();
+        System.out.println();
     }
 
     @Override

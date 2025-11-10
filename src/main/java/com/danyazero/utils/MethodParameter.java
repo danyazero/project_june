@@ -14,7 +14,12 @@ public class MethodParameter implements Node {
 
     @Override
     public void produce(GenerationContext ctx) {
-        ctx.defineVariable(name, type);
+
+    }
+
+    @Override
+    public void resolveTypes(GenerationContext ctx) {
+        ctx.getMethodContext().defineVariable(name, type);
     }
 
     public Type<?> getType() {

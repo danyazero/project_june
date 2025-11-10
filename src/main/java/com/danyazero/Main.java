@@ -1,7 +1,9 @@
 package com.danyazero;
 
 import com.danyazero.model.Operation;
+import com.danyazero.model.ast.Node;
 import com.danyazero.utils.*;
+import com.danyazero.utils.TypeNode;
 import june.GoLexer;
 import june.GoParser;
 import org.antlr.v4.runtime.CharStreams;
@@ -18,9 +20,9 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-//        buildTree(args[0]);
+        buildTree(args[0]);
+//        createTestClass2();
 //        createTestClass();
-        createTestClass2();
 
 
     }
@@ -37,9 +39,23 @@ public class Main {
         System.out.println();
 
         var visitor = new JuneVisitor();
-        String res = visitor.visit(tree);
 
-        System.out.println(res);
+        var imports = Map.ofEntries(
+                Map.entry("System", "java.lang.System"),
+                Map.entry("String", "java.lang.String"),
+                Map.entry("Object", "java.lang.Object")
+        );
+
+        Node ast = visitor.visit(tree);
+        var generationContext = new GenerationContext(imports);
+        ast.resolveTypes(generationContext);
+        ast.produce(generationContext);
+
+        byte[] bytes = generationContext.getClassWriter().toByteArray();
+
+        try (FileOutputStream fos = new FileOutputStream("Hello.class")) {
+            fos.write(bytes);
+        }
     }
 
     private static void createTestClass2() throws IOException {
@@ -49,11 +65,11 @@ public class Main {
                 Map.entry("Object", "java.lang.Object")
         );
 
-        var generationContext = new GenerationContext(new ClassWriter(0), imports);
+        var generationContext = new GenerationContext(imports);
 
-        var expression0 = new Expression(Operation.DIVISION, Value.of(38298), Value.of(6));
-        var expression1 = new Expression(Operation.ADDITION, Value.of(128), expression0);
-        var expression2 = new Expression(Operation.MULTIPLICATION, Value.of(3), expression1);
+        var expression0 = new ExpressionNode(Operation.DIVISION, Value.of(38298), Value.of(6));
+        var expression1 = new ExpressionNode(Operation.ADDITION, Value.of(128), expression0);
+        var expression2 = new ExpressionNode(Operation.MULTIPLICATION, Value.of(3), expression1);
 
 
         var slice = new Slice(List.of(
@@ -76,7 +92,7 @@ public class Main {
                         method
                 ),
                 List.of(
-                        new ResultType(new VoidType())
+                        new TypeNode(new VoidType())
                 )
         );
 
@@ -86,63 +102,6 @@ public class Main {
         newClass.produce(generationContext);
 
         byte[] bytes = generationContext.getClassWriter().toByteArray();
-
-        try (FileOutputStream fos = new FileOutputStream("Hello.class")) {
-            fos.write(bytes);
-        }
-    }
-
-    private static void createTestClass() throws IOException {
-        ClassWriter cw = new ClassWriter(0);
-        cw.visit(V17, ACC_PUBLIC, "Hello", null, "java/lang/Object", null);
-
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-        mv.visitCode();
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-        mv.visitInsn(RETURN);
-        mv.visitMaxs(1, 1);
-        mv.visitEnd();
-
-        mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null);
-        mv.visitCode();
-
-        var imports = Map.ofEntries(
-                Map.entry("System", "java.lang.System"),
-                Map.entry("String", "java.lang.String"),
-                Map.entry("Object", "java.lang.Object")
-        );
-
-        var generationContext = new GenerationContext(mv, imports);
-
-        // ((38298 / 6) + 128) * 3 = 19 533
-        var expression0 = new Expression(Operation.DIVISION, Value.of(38298), Value.of(6));
-        var expression1 = new Expression(Operation.ADDITION, Value.of(128), expression0);
-        var expression2 = new Expression(Operation.MULTIPLICATION, Value.of(3), expression1);
-
-
-        var slice = new Slice(List.of(
-                expression2,
-                Value.of(2),
-                Value.of(3)
-        ));
-        var sliceVar = new Variable("a", new ArrayType(new IntegerType()), slice);
-        var sliceElementVar = new Variable("b", new IntegerType(), new SliceElement(new Operand("a"), Value.of(0)));
-        var method = new MethodInvoke("System.out.println", List.of(new Operand("b")));
-
-        sliceVar.produce(generationContext);
-        sliceElementVar.produce(generationContext);
-        method.produce(generationContext);
-
-        mv = generationContext.getMethodVisitor();
-
-        mv.visitInsn(RETURN);
-        mv.visitMaxs(5, 3);
-        mv.visitEnd();
-
-        cw.visitEnd();
-
-        byte[] bytes = cw.toByteArray();
 
         try (FileOutputStream fos = new FileOutputStream("Hello.class")) {
             fos.write(bytes);

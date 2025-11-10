@@ -1,10 +1,11 @@
 package main
 
-pub class Main {
-    func main(args []string) int {
-        a := (128 + 38299) * 3
-        b := [a, 2, 3]
-        c := a[0]
+pub class Hello {
+    func main(args []string) {
+        a := (1288 + 38299)
+        d := a * 3
+        b := [a, d, 3]
+        c := b[1]
         System.out.println(c)
     }
 }

@@ -19,4 +19,13 @@ public enum Operation {
     public String getOperation() {
         return operation;
     }
+
+    public static Operation fromString(String symbol) {
+        for (Operation op : Operation.values()) {
+            if (op.operation.equals(symbol)) {
+                return op;
+            }
+        }
+        throw new IllegalArgumentException("No operator with symbol: " + symbol);
+    }
 }

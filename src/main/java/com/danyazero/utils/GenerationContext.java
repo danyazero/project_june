@@ -1,8 +1,6 @@
 package com.danyazero.utils;
 
-import com.danyazero.model.Type;
-import com.danyazero.model.Variable;
-import com.danyazero.model.VariableInfo;
+import com.danyazero.model.MethodSign;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
@@ -10,71 +8,64 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class GenerationContext {
-    private final MethodVisitor mv;
+    private final MethodSign currentMethodSign;
     private final ClassWriter cw;
-
-    private final GenerationContext parent;
-    private final Deque<Scope> scopes = new ArrayDeque<>();
     private final Map<String, String> imports;
-    private short nextLocalIndex;
+    private final Map<MethodSign, MethodContext> methodSigns;
 
-    public GenerationContext(GenerationContext parent, MethodVisitor mv) {
-        this.parent = parent;
-        this.cw = parent.cw;
-        this.mv = mv;
-        scopes.push(new Scope());
-        this.imports = new HashMap<>();
-        //TODO fix GenerationContext import inheritance
-    }
-
-    public GenerationContext(MethodVisitor mv, Map<String, String> imports) {
-        this.parent = null;
-        this.cw = null;
-        this.mv = mv;
-        scopes.push(new Scope());
+    public GenerationContext(Map<String, String> imports) {
+        this.currentMethodSign = null;
+        this.cw = new ClassWriter(0);
         this.imports = imports;
+        this.methodSigns = new HashMap<>();
     }
 
-    public GenerationContext(ClassWriter cw, Map<String, String> imports) {
-        this.mv = null;
-        this.parent = null;
-        this.cw = cw;
-        scopes.push(new Scope());
-        this.imports = imports;
+    public GenerationContext(MethodSign currentMethodSign, GenerationContext generationContext) {
+        this.currentMethodSign = currentMethodSign;
+        this.cw = generationContext.getClassWriter();
+        this.imports = generationContext.imports;
+        this.methodSigns = generationContext.methodSigns;
     }
 
-    public void enterScope() {
-        scopes.push(new Scope(scopes.peek()));
+    public ClassWriter getClassWriter() {
+        return cw;
     }
 
-    public void exitScope() {
-        scopes.pop();
+    public GenerationContext newMethodContext(MethodSign methodSign, MethodVisitor methodVisitor) {
+        methodSigns.put(methodSign, new MethodContext(methodVisitor));
+
+        return new GenerationContext(methodSign, this);
     }
 
-    public short defineVariable(String name, Type<?> type) {
-        var scope = scopes.peek();
-        if (scope != null) {
-            var variableIndex = this.allocateLocal(type);
-            scope.define(name, type, variableIndex);
+    public GenerationContext newMethodContext(MethodSign methodSign) {
+        methodSigns.put(methodSign, new MethodContext());
 
-            return variableIndex;
-        } else throw new IllegalStateException("Variable has not been defined (Scope is null)");
+        return new GenerationContext(methodSign, this);
     }
 
-    public VariableInfo resolveVariable(String name) {
-        for (Scope scope : scopes) {
-            var v = scope.resolve(name);
-            if (v != null) return v;
+    public MethodVisitor getMethodVisitor(MethodSign methodSign) {
+        if (methodSigns.containsKey(methodSign)) {
+            return methodSigns.get(methodSign).getMethodVisitor();
         }
-        if (parent != null) return parent.resolveVariable(name);
-        return null;
+        throw new RuntimeException("Method Context Not Found: " + methodSign);
     }
 
-    public short allocateLocal(Type<?> type) {
-        short index = nextLocalIndex;
-        nextLocalIndex += type.getSize();
+    public MethodVisitor getMethodVisitor() {
+        if (methodSigns.containsKey(this.currentMethodSign)) {
+            return methodSigns.get(this.currentMethodSign).getMethodVisitor();
+        }
+        throw new RuntimeException("Method Context Not Found: " + this.currentMethodSign);
+    }
 
-        return index;
+    public MethodContext getMethodContext() {
+        if (methodSigns.containsKey(currentMethodSign)) {
+            return methodSigns.get(currentMethodSign);
+        }
+        throw new RuntimeException("Method Context Not Found: " + currentMethodSign);
+    }
+
+    public GenerationContext getGenerationContext(MethodSign methodSign) {
+        return new GenerationContext(methodSign, this);
     }
 
     public void addImport(String importName) {
@@ -110,15 +101,7 @@ public class GenerationContext {
         }
     }
 
-    public MethodVisitor getMethodVisitor() {
-        if (mv != null) {
-            return mv;
-        }
-
-        throw new IllegalStateException("MethodVisitor has not been defined");
-    }
-
-    public ClassWriter getClassWriter() {
-        return cw;
+    public MethodSign getCurrentMethodSign() {
+        return currentMethodSign;
     }
 }

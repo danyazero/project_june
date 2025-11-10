@@ -1,8 +1,8 @@
 package com.danyazero.utils;
 
 import com.danyazero.model.Array;
+import com.danyazero.model.MethodSign;
 import com.danyazero.model.ReferenceType;
-import com.danyazero.model.Type;
 import com.danyazero.model.ast.Node;
 
 import java.util.ArrayList;
@@ -14,9 +14,9 @@ public class Method implements Node {
     private final String name;
     private final List<MethodParameter> parameters;
     private final List<Node> statementList;
-    private final List<ResultType> returnTypes;
+    private final List<TypeNode> returnTypes;
 
-    public Method(String name, List<MethodParameter> parameters, List<Node> statementList, List<ResultType> returnTypes) {
+    public Method(String name, List<MethodParameter> parameters, List<Node> statementList, List<TypeNode> returnTypes) {
         this.name = name;
         this.parameters = parameters;
         this.statementList = statementList;
@@ -25,33 +25,46 @@ public class Method implements Node {
 
     @Override
     public void produce(GenerationContext ctx) {
-
-
-        var parametersDescriptor = getMethodParameters(ctx);
-        var returnParametersDescriptor = getMethodReturnParameters(ctx);
-        var descriptor = parametersDescriptor + returnParametersDescriptor;
-        System.out.println(descriptor);
-
+        var descriptor = getDescriptor(ctx);
         var methodVisitor = ctx.getClassWriter()
                 .visitMethod(ACC_PUBLIC + ACC_STATIC, name, descriptor, null, null);
-        var statementContext = new GenerationContext(ctx, methodVisitor);
+
+        var statementContext = ctx.getGenerationContext(new MethodSign(name, descriptor));
+        statementContext.getMethodContext().setMethodVisitor(methodVisitor);
+
         methodVisitor.visitCode();
 
         statementList.forEach(statement -> statement.produce(statementContext));
 
         methodVisitor.visitInsn(RETURN);
-        methodVisitor.visitMaxs(5, 3);
+        methodVisitor.visitMaxs(5, 5);
         methodVisitor.visitEnd();
+    }
+
+    @Override
+    public void resolveTypes(GenerationContext ctx) {
+
+        var newContext = ctx.newMethodContext(new MethodSign(name, getDescriptor(ctx)));
+
+        statementList.forEach(statement -> statement.resolveTypes(newContext));
+    }
+
+    private String getDescriptor(GenerationContext ctx) {
+        var parametersDescriptor = getMethodParameters(ctx);
+        var returnParametersDescriptor = getMethodReturnParameters(ctx);
+
+        return parametersDescriptor + returnParametersDescriptor;
     }
 
     private String getMethodReturnParameters(GenerationContext ctx) {
         if (!parameters.isEmpty()) {
-            var type = returnTypes.getFirst().getType();
+            var type = returnTypes.isEmpty() ? new VoidType() : returnTypes.getFirst().getType();
             if (type instanceof VoidType) {
               return "V";
             } if (type instanceof Array<?> arrayType) {
                 return getParameter(arrayType, ctx);
             } else if (type instanceof ReferenceType<?> referenceType) {
+                System.out.println(referenceType.getClass());
                 return getParameter(referenceType, ctx);
             }
         }
@@ -73,7 +86,7 @@ public class Method implements Node {
         return null;
     }
 
-    private String getParameter(Type<?> type, GenerationContext ctx) {
+    private String getParameter(com.danyazero.model.Type<?> type, GenerationContext ctx) {
         System.out.println(type.getClass());
         if (type instanceof ArrayType arrayType) {
             return "[" + getParameter(arrayType.getChild(), ctx);

@@ -3,14 +3,14 @@ package com.danyazero.utils;
 import com.danyazero.model.Type;
 import com.danyazero.model.ast.Expression;
 import com.danyazero.model.ast.Node;
-import com.danyazero.model.ast.IValue;
 
 public class SliceElement implements Node, Expression {
-    private final IValue value;
-    private final Value<Integer> index;
+    private final Expression value;
+    private final Expression index;
+    private Type<?> type;
 
 
-    public SliceElement(IValue value, Value<Integer> index) {
+    public SliceElement(Expression value, Expression index) {
         this.value = value;
         this.index = index;
     }
@@ -33,7 +33,14 @@ public class SliceElement implements Node, Expression {
     }
 
     @Override
+    public void resolveTypes(GenerationContext ctx) {
+        index.resolveTypes(ctx);
+        value.resolveTypes(ctx);
+        type = value.getType();
+    }
+
+    @Override
     public Type<?> getType() {
-        return null;
+        return index.getType();
     }
 }

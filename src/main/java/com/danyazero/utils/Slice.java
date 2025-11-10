@@ -8,19 +8,10 @@ import java.util.List;
 
 public class Slice implements Node, Expression {
     private final List<Expression> items;
-    private final ArrayType arrayType;
+    private ArrayType arrayType;
 
     public Slice(List<Expression> items) {
         this.items = items;
-        var type = items.getFirst().getType();
-        var arrayType = type.getClass().toString();
-        for (var item : items) {
-            var itemType = item.getType().getClass().toString();
-            if (!arrayType.equals(itemType)) {
-                throw new RuntimeException("Slice items must have the same type.");
-            }
-        }
-        this.arrayType = new ArrayType(type);
     }
 
     @Override
@@ -28,12 +19,29 @@ public class Slice implements Node, Expression {
         arrayType.postack(ctx.getMethodVisitor(), this.items.size());
 
         for (var i = 0; i < items.size(); i++) {
-            new SliceValue(i, items.get(i)).produce(ctx);
+            var sliceValue = new SliceValue(i, items.get(i));
+            sliceValue.produce(ctx);
+            if (arrayType == null) arrayType = new ArrayType(sliceValue.getType());
+            else if (isTypeMismatch(sliceValue)) throw new RuntimeException("Slice type mismatch");
         }
+    }
+
+    private boolean isTypeMismatch(SliceValue sliceValue) {
+        return !arrayType.getChild().getClass().toString().equals(sliceValue.getType().getClass().toString());
+    }
+
+    @Override
+    public void resolveTypes(GenerationContext ctx) {
+        items.forEach(i -> i.resolveTypes(ctx));
+        var elementType = items.getFirst().getType();
+        for (var item : items) {
+            if (!elementType.getClass().toString().equals(item.getType().getClass().toString())) throw new RuntimeException("Slice type mismatch");
+        }
+        arrayType = new ArrayType(elementType);
     }
 
     @Override
     public Type<?> getType() {
-        return null;
+        return arrayType;
     }
 }

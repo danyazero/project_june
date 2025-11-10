@@ -1,7 +1,6 @@
 package com.danyazero.utils;
 
 import com.danyazero.model.PrimitiveType;
-import com.danyazero.model.ReferenceType;
 import com.danyazero.model.Type;
 import org.objectweb.asm.MethodVisitor;
 

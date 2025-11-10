@@ -1,6 +1,7 @@
 package com.danyazero.utils;
 
-import com.danyazero.model.ast.Node;
+import com.danyazero.model.Type;
+import com.danyazero.model.ast.Expression;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -10,11 +11,11 @@ import java.util.List;
 import static org.objectweb.asm.Opcodes.GETSTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
-public class MethodInvoke implements Node {
+public class MethodInvoke implements Expression {
     private final String method;
-    private final List<Node> arguments;
+    private final List<Expression> arguments;
 
-    public MethodInvoke(String method, List<Node> arguments) {
+    public MethodInvoke(String method, List<Expression> arguments) {
         this.method = method;
         this.arguments = arguments;
     }
@@ -38,5 +39,15 @@ public class MethodInvoke implements Node {
         ctx.getMethodVisitor().visitFieldInsn(GETSTATIC, targetClass.replaceAll("\\.", "/"), methodParts[1], descriptor.replaceAll("\\.", "/"));
         arguments.forEach(argument -> argument.produce(ctx));
         ctx.getMethodVisitor().visitMethodInsn(INVOKEVIRTUAL, fields.getFirst().getType().getTypeName().replaceAll("\\.", "/"), methodParts[methodParts.length-1], "(I)V", false);
+    }
+
+    @Override
+    public void resolveTypes(GenerationContext ctx) {
+        arguments.forEach(argument -> argument.resolveTypes(ctx));
+    }
+
+    @Override
+    public Type<?> getType() {
+        return null;
     }
 }

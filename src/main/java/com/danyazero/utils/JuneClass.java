@@ -1,5 +1,6 @@
 package com.danyazero.utils;
 
+import com.danyazero.model.MethodSign;
 import com.danyazero.model.ast.Node;
 import org.objectweb.asm.MethodVisitor;
 
@@ -26,10 +27,16 @@ public class JuneClass implements Node {
 
 
         MethodVisitor mv = ctx.getClassWriter().visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-        var nextScope = new GenerationContext(ctx, mv);
+        var nextScope = ctx.newMethodContext(new MethodSign("<void>", "()V"), mv);
         produceDefaultClassConstructor(nextScope.getMethodVisitor());
+
         members.forEach(m -> m.produce(ctx));
         ctx.getClassWriter().visitEnd();
+    }
+
+    @Override
+    public void resolveTypes(GenerationContext ctx) {
+        members.forEach(m -> m.resolveTypes(ctx));
     }
 
     private void produceDefaultClassConstructor(MethodVisitor mv) {

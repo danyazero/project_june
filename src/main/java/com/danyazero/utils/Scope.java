@@ -20,6 +20,7 @@ public class Scope {
     }
 
     public void define(String name, Type<?> type, short localIndex) {
+        System.out.println(type.getClass());
 
         variables.put(
                 name,
