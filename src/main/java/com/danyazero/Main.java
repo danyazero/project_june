@@ -19,8 +19,10 @@ import static org.objectweb.asm.Opcodes.*;
 public class Main {
     public static void main(String[] args) throws IOException {
 //        buildTree(args[0]);
+//        createTestClass();
+        createTestClass2();
 
-        createTestClass();
+
     }
 
     private static void buildTree(String file) throws IOException {
@@ -40,6 +42,56 @@ public class Main {
         System.out.println(res);
     }
 
+    private static void createTestClass2() throws IOException {
+        var imports = Map.ofEntries(
+                Map.entry("System", "java.lang.System"),
+                Map.entry("String", "java.lang.String"),
+                Map.entry("Object", "java.lang.Object")
+        );
+
+        var generationContext = new GenerationContext(new ClassWriter(0), imports);
+
+        var expression0 = new Expression(Operation.DIVISION, Value.of(38298), Value.of(6));
+        var expression1 = new Expression(Operation.ADDITION, Value.of(128), expression0);
+        var expression2 = new Expression(Operation.MULTIPLICATION, Value.of(3), expression1);
+
+
+        var slice = new Slice(List.of(
+                expression2,
+                Value.of(2),
+                Value.of(3)
+        ));
+        var sliceVar = new Variable("a", new ArrayType(new IntegerType()), slice);
+        var sliceElementVar = new Variable("b", new IntegerType(), new SliceElement(new Operand("a"), Value.of(0)));
+        var method = new MethodInvoke("System.out.println", List.of(new Operand("b")));
+
+        var mainMethod = new Method(
+                "main",
+                List.of(
+                        new MethodParameter("args", new ArrayType(new StringType()))
+                ),
+                List.of(
+                        sliceVar,
+                        sliceElementVar,
+                        method
+                ),
+                List.of(
+                        new ResultType(new VoidType())
+                )
+        );
+
+        var newClass = new JuneClass("Hello", List.of(
+                mainMethod
+        ));
+        newClass.produce(generationContext);
+
+        byte[] bytes = generationContext.getClassWriter().toByteArray();
+
+        try (FileOutputStream fos = new FileOutputStream("Hello.class")) {
+            fos.write(bytes);
+        }
+    }
+
     private static void createTestClass() throws IOException {
         ClassWriter cw = new ClassWriter(0);
         cw.visit(V17, ACC_PUBLIC, "Hello", null, "java/lang/Object", null);
@@ -57,7 +109,8 @@ public class Main {
 
         var imports = Map.ofEntries(
                 Map.entry("System", "java.lang.System"),
-                Map.entry("String", "java.lang.String")
+                Map.entry("String", "java.lang.String"),
+                Map.entry("Object", "java.lang.Object")
         );
 
         var generationContext = new GenerationContext(mv, imports);
@@ -83,15 +136,6 @@ public class Main {
 
         mv = generationContext.getMethodVisitor();
 
-//        mv.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "toString", "([I)Ljava/lang/String;", false);
-//        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
-
-//        mv.visitIntInsn(ISTORE, 1);
-//        var variableInfo = generationContext.resolveVariable("a");
-//
-//        mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-//        mv.visitIntInsn(ILOAD, variableInfo.localIndex());
-//        mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
         mv.visitInsn(RETURN);
         mv.visitMaxs(5, 3);
         mv.visitEnd();

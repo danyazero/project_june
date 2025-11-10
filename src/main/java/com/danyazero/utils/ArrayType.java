@@ -7,7 +7,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class ArrayType implements ReferenceType<Integer> {
+public class ArrayType implements Type<Integer> {
     private final Type<?> child;
 
     public ArrayType(Type<?> type) {

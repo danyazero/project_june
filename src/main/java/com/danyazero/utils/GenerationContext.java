@@ -24,6 +24,7 @@ public class GenerationContext {
         this.mv = mv;
         scopes.push(new Scope());
         this.imports = new HashMap<>();
+        //TODO fix GenerationContext import inheritance
     }
 
     public GenerationContext(MethodVisitor mv, Map<String, String> imports) {
@@ -50,11 +51,11 @@ public class GenerationContext {
         scopes.pop();
     }
 
-    public short defineVariable(String name, Variable variable) {
+    public short defineVariable(String name, Type<?> type) {
         var scope = scopes.peek();
         if (scope != null) {
-            var variableIndex = this.allocateLocal(variable.getType());
-            scope.define(name, variable, variableIndex);
+            var variableIndex = this.allocateLocal(type);
+            scope.define(name, type, variableIndex);
 
             return variableIndex;
         } else throw new IllegalStateException("Variable has not been defined (Scope is null)");
@@ -93,7 +94,7 @@ public class GenerationContext {
     private Optional<String> resolveCoreImport(String importName) {
         try {
             return Optional.of(
-                    Class.forName("java.lang." + importName).toString()
+                    Class.forName("java.lang." + importName).getName()
             );
         } catch (Exception e) {
             return Optional.empty();
@@ -105,12 +106,16 @@ public class GenerationContext {
         try {
             return Class.forName(className).getField(fieldName);
         } catch (Exception e) {
-            throw new RuntimeException("An error occurred while trying to resolve " + className + "." + fieldName, e);
+            throw new RuntimeException("An error occurred while trying to resolve " + className + "->" + fieldName, e);
         }
     }
 
     public MethodVisitor getMethodVisitor() {
-        return mv;
+        if (mv != null) {
+            return mv;
+        }
+
+        throw new IllegalStateException("MethodVisitor has not been defined");
     }
 
     public ClassWriter getClassWriter() {

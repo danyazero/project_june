@@ -18,7 +18,7 @@ public class Variable implements com.danyazero.model.Variable, Node {
     @Override
     public void produce(GenerationContext ctx) {
         value.produce(ctx);
-        var variableIndex = ctx.defineVariable(name, this);
+        var variableIndex = ctx.defineVariable(name, type);
         type.store(ctx.getMethodVisitor(), variableIndex);
     }
 

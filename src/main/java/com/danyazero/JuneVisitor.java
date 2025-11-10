@@ -71,16 +71,16 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
         }
 
 
-        return String.format("Object {name=%s }", name);
+        return String.format("Object { annotations=%s, name=%s, implements=[], extends=[], members=%s }", visit(ctx.annotationList()), name, membersString);
     }
 
     @Override
     public String visitModifier(GoParser.ModifierContext ctx) {
-            if (ctx.PUBLIC() != null) {
-                return "PUBLIC";
-            }
+        if (ctx.PUBLIC() != null) {
+            return "PUBLIC";
+        }
 
-            throw new RuntimeException("Illegal Modifier");
+        throw new RuntimeException("Illegal Modifier");
     }
 
     @Override
@@ -138,9 +138,26 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
     }
 
     @Override
+    public String visitSignature(GoParser.SignatureContext ctx) {
+        var resultParameters = new ArrayList<String>();
+        if (ctx.result() != null) {
+            if (ctx.result().type_() != null) {
+                var type = visitType_(ctx.result().type_());
+                resultParameters.add(type);
+            } else if (ctx.result().parameters() != null) {
+                for (var param : ctx.result().parameters().parameterDecl()) {
+                    var type = visitTypeLit(param.type_().typeLit());
+                    resultParameters.add(type);
+                }
+            }
+        }
+
+        return Arrays.toString(resultParameters.toArray());
+    }
+
+    @Override
     public String visitFunctionDecl(GoParser.FunctionDeclContext ctx) {
         List<String> params = new ArrayList<>();
-        var resultParameters = new ArrayList<String>();
         if (ctx.signature() != null) {
             var paramCtx = ctx.signature().parameters();
             if (paramCtx != null) {
@@ -150,18 +167,6 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
                     params.add(String.format("Param { name=%s, type=%s }", paramName, getType(type)));
                 }
             }
-            var resultCtx = ctx.signature().result();
-            if (resultCtx != null) {
-                if (resultCtx.type_() != null) {
-                    var type = visitTypeLit(resultCtx.type_().typeLit());
-                    resultParameters.add(String.format("Param { type=%s }", type));
-                } else if (resultCtx.parameters() != null) {
-                    for (var param : resultCtx.parameters().parameterDecl()) {
-                        var type = visitTypeLit(param.type_().typeLit());
-                        resultParameters.add(String.format("Param { type=%s }", type));
-                    }
-                }
-            }
         }
 
         return String.format(
@@ -169,7 +174,7 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
                 ctx.IDENTIFIER().getText(),
                 Arrays.toString(params.toArray()),
                 visit(ctx.block()),
-                resultParameters
+                visitSignature(ctx.signature())
         );
     }
 
@@ -195,7 +200,6 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
 
         return String.format("IfStmt { expression=%s , block=%s }", statementExpression, Arrays.toString(statementBlock.toArray()));
     }
-
 
 
     @Override
@@ -243,7 +247,8 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
             return String.format("Operand { name=%s }", ctx.operandName().getText());
         } else if (ctx.expression() != null) {
             return visitExpression(ctx.expression());
-        };
+        }
+        ;
 
         return null;
     }
@@ -394,7 +399,7 @@ public class JuneVisitor extends GoParserBaseVisitor<String> {
     @Override
     public String visitShortSliceDecl(GoParser.ShortSliceDeclContext ctx) {
         var items = new ArrayList<String>();
-        for (var item : ctx.literalList().literal()) {
+        for (var item : ctx.literalList().expression()) {
             items.add(visit(item));
         }
 

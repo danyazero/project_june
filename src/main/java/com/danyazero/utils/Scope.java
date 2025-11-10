@@ -1,5 +1,6 @@
 package com.danyazero.utils;
 
+import com.danyazero.model.Type;
 import com.danyazero.model.Variable;
 import com.danyazero.model.VariableInfo;
 
@@ -18,13 +19,13 @@ public class Scope {
         this(null);
     }
 
-    public void define(String name, Variable variable, short localIndex) {
+    public void define(String name, Type<?> type, short localIndex) {
 
         variables.put(
                 name,
                 new VariableInfo(
-                        variable.getName(),
-                        variable.getType(),
+                        name,
+                        type,
                         localIndex
                 )
         );

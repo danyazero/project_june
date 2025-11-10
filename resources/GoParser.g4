@@ -566,7 +566,7 @@ shortSliceDecl
     ;
 
 literalList
-    : literal (','+ literal) *
+    : expression (','+ expression) *
     ;
 
 slice_
