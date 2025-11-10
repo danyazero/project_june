@@ -4,8 +4,13 @@ pub class Hello {
     func main(args []string) {
         a := (1288 + 38299)
         d := a * 3
-        b := [a, d, 3]
-        c := b[1]
+        m := a * (3 + d)
+        b := [a, d, m]
+        c := b[0]
+        System.out.println(c)
+        c += b[1]
+        System.out.println(c)
+        c *= b[2]
         System.out.println(c)
     }
 }

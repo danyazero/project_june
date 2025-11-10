@@ -27,6 +27,10 @@ public class Operand implements Expression {
         System.out.println(variableInfo);
     }
 
+    public VariableInfo getVariableInfo() {
+        return variableInfo;
+    }
+
     public Type<?> getType() {
         return variableInfo.type();
     }

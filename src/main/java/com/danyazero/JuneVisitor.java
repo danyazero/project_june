@@ -296,46 +296,36 @@ public class JuneVisitor extends GoParserBaseVisitor<Node> {
     @Override
     public Node visitAssignment(GoParser.AssignmentContext ctx) {
         var operation = ctx.assign_op();
-        throw new RuntimeException("Not implemented yet."); //TODO Implement assignment
 
-//        if (operation.ASSIGN() != null) {
-//            var left = visit(ctx.expressionList(0).expression(0));
-//            var right = visit(ctx.expressionList(1).expression(0));
-//
-//            if (operation.PLUS() != null) {
-//                var increment = String.format("Increment { operand=%s, value=%s }", left, right);
-//
-//                return String.format("Assignment { operand=%s, expr=%s }", left, increment);
-//            } else if (operation.MINUS() != null) {
-//                var increment = String.format("Increment { operand=%s, value=Negate { value=%s } }", left, right);
-//
-//                return String.format("Assignment { operand=%s, expr=%s }", left, increment);
-//            } else if (operation.STAR() != null) {
-//                var multiplication = String.format("Expression { left=%s, op=*, right=%s}", left, right);
-//
-//                return String.format("Assignment { operand=%s, expr=%s }", left, multiplication);
-//            } else if (operation.DIV() != null) {
-//                var division = String.format("Expression { left=%s, op=/, right=%s}", left, right);
-//
-//                return String.format("Assignment { operand=%s, expr=%s }", left, division);
-//            } else if (operation.MOD() != null) {
-//                var mod = String.format("Expression { left=%s, op=%%, right=%s}", left, right);
-//
-//                return String.format("Assignment { operand=%s, expr=%s }", left, mod);
-//            } else if (operation.RSHIFT() != null) {
-//                var rightShift = String.format("Expression { left=%s, op=>>, right=%s}", left, right);
-//
-//                return String.format("Assignment { operand=%s, expr=%s }", left, rightShift);
-//            } else if (operation.LSHIFT() != null) {
-//                var leftShift = String.format("Expression { left=%s, op=<<, right=%s}", left, right);
-//
-//                return String.format("LShiftAssignment { operand=%s, expr=%s }", left, leftShift);
-//            } else {
-//                return String.format("Assignment { operand=%s, expr=%s }", left, right);
-//            }
-//        }
-//
-//        throw new RuntimeException("Unhandled assignment: " + ctx.getText());
+        if (operation.ASSIGN() != null) {
+            var left = visitExpression(ctx.expressionList(0).expression(0));
+            if (left instanceof Operand operand) {
+                var right = visitExpression(ctx.expressionList(1).expression(0));
+
+                if (operation.PLUS() != null) {
+                    return new Assignment(operand, new ExpressionNode(Operation.ADDITION, left, right));
+                } else if (operation.MINUS() != null) {
+                    return new Assignment(operand, new ExpressionNode(Operation.SUBSTRUCTION, left, right));
+                } else if (operation.STAR() != null) {
+                    return new Assignment(operand, new ExpressionNode(Operation.MULTIPLICATION, left, right));
+                } else if (operation.DIV() != null) {
+                    return new Assignment(operand, new ExpressionNode(Operation.DIVISION, left, right));
+                } else if (operation.MOD() != null) {
+                    return new Assignment(operand, new ExpressionNode(Operation.MOD, left, right));
+                } else if (operation.RSHIFT() != null) {
+                    return new Assignment(operand, new ExpressionNode(Operation.RSHIFT, left, right));
+                } else if (operation.LSHIFT() != null) {
+                    return new Assignment(operand, new ExpressionNode(Operation.LSHIFT, left, right));
+                } else {
+                    return new Assignment(operand, right);
+                }
+            }
+
+            throw new RuntimeException("Left expression should be Operand { }: " + ctx.getText());
+        }
+
+
+        throw new RuntimeException("Unhandled assignment: " + ctx.getText());
     }
 
     @Override

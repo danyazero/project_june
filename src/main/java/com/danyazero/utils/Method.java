@@ -37,7 +37,7 @@ public class Method implements Node {
         statementList.forEach(statement -> statement.produce(statementContext));
 
         methodVisitor.visitInsn(RETURN);
-        methodVisitor.visitMaxs(5, 5);
+        methodVisitor.visitMaxs(5, 8);
         methodVisitor.visitEnd();
     }
 
