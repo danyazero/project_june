@@ -1,0 +1,9 @@
+class Main {
+    fn main(args []string) {
+        array := int[1, 2, 3]
+
+        for item in array {
+            println!(args[item])
+        }
+    }
+}
