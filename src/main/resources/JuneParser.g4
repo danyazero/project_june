@@ -221,7 +221,7 @@ arguments
     ;
 
 forLoopStmt
-    : FOR loopParameters IN (expression | range) block
+    : FOR loopParameters? IN (expression | range) block
     ;
 
 loopParameters

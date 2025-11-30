@@ -1,6 +1,7 @@
 package com.danyazero.type
 
 import com.danyazero.model.PrimitiveType
+import com.danyazero.model.ReferenceType
 import com.danyazero.model.Type
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
@@ -16,8 +17,8 @@ class ArrayType(
 
         if (child is PrimitiveType<*>) {
             mv.visitIntInsn(Opcodes.NEWARRAY, child.getType())
-        } else {
-            mv.visitInsn(Opcodes.ANEWARRAY)
+        } else if (child is ReferenceType){
+            mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/String")
         }
     }
 

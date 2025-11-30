@@ -40,6 +40,6 @@ class StringType : ReferenceType<String> {
     }
 
     override fun getName(): String {
-        return "String"
+        return "java/lang/String"
     }
 }

@@ -1,9 +1,11 @@
 class Main {
     fn main(args []string) {
-        array := int[1, 2, 3]
+        array := string["Hello", " ", "World", "!"]
 
-        for item in array {
-            println!(args[item])
+        str := ""
+        for in array {
+            str += it
         }
+        println!(str)
     }
 }

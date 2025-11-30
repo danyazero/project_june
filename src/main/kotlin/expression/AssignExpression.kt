@@ -4,6 +4,7 @@ import com.danyazero.model.Expression
 import com.danyazero.model.Node
 import com.danyazero.model.PrimitiveType
 import com.danyazero.node.Operand
+import com.danyazero.type.StringType
 import com.danyazero.utils.GenerationContext
 
 class AssignExpression(
@@ -15,13 +16,18 @@ class AssignExpression(
 
         expression.produce(ctx)
         operand.getType(ctx).let {
-            if (it is PrimitiveType<*>) {
+            if (it is PrimitiveType<*> || it is StringType) {
                 val variable = ctx.resolveVariable(operand.name) ?: throw RuntimeException("Variable ${operand.name} not found")
                 it.store(ctx.getMethodVisitor(), variable.index)
                 return
             }
         }
 
-        throw RuntimeException("Unsupported assignment type")    }
+        throw RuntimeException("Unsupported assignment type")
+    }
+
+    override fun toString(): String {
+        return "AssignExpression(operand=$operand, expression=$expression)"
+    }
 
 }

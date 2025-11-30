@@ -5,8 +5,10 @@ import com.danyazero.expression.ValueExpression
 import com.danyazero.model.Expression
 import com.danyazero.model.Node
 import com.danyazero.model.NumberType
+import com.danyazero.type.AnyType
 import com.danyazero.type.ArrayType
 import com.danyazero.type.IntegerType
+import com.danyazero.type.VoidType
 import com.danyazero.utils.GenerationContext
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes
@@ -14,8 +16,8 @@ import org.objectweb.asm.Opcodes
 class OperandLoop(
     val operand: Expression,
     val index: Parameter = Parameter(name = "_", type = IntegerType()),
-    val item: Parameter,
-    val statements: List<Node> = emptyList()
+    val item: Parameter = Parameter(name = "it", type = AnyType()),
+    val statements: List<Node>
 ) : Node {
 
     override fun produce(ctx: GenerationContext) {
@@ -53,6 +55,10 @@ class OperandLoop(
         ctx.exitScope()
         ctx.getMethodVisitor().visitLabel(exitLabel)
 
+    }
+
+    override fun toString(): String {
+        return "OperandLoop(operand=$operand, index=$index, item=$item, statements=$statements)"
     }
 
 }

@@ -26,4 +26,8 @@ class Array(
     override fun getType(ctx: GenerationContext): Type<*> {
         return type
     }
+
+    override fun toString(): String {
+        return "Array(items=$items, type=$type)"
+    }
 }

@@ -131,17 +131,52 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
         throw RuntimeException("Unsupported expression")
     }
 
+    override fun visitAssignment(ctx: JuneParser.AssignmentContext): AssignExpression {
+        val operation = ctx.assign_op()
+
+        if (operation.ASSIGN() != null) {
+            val operand = visitExpression(ctx.expression(0))
+            if (operand is Operand) {
+                val right = visitExpression(ctx.expression(1))
+
+
+                val expression = when {
+                    operation.PLUS()          != null -> ::AdditionExpression
+                    operation.MINUS()         != null -> ::SubstructionExpression
+                    operation.STAR()          != null -> ::MultiplicationExpression
+                    operation.DIV()           != null -> ::DivisionExpression
+                    operation.MOD()           != null -> ::RemainderExpression
+                    else                              -> null
+                }
+
+                if (expression != null) {
+                    return AssignExpression(operand = operand, expression = expression(operand, right))
+                }
+
+                return AssignExpression(operand = operand, expression = right)
+            }
+
+            throw RuntimeException("Left expression should be Operand { }: " + ctx.getText())
+        }
+
+
+        throw RuntimeException("Unhandled assignment: " + ctx.getText())
+    }
+
     override fun visitForLoopStmt(ctx: JuneParser.ForLoopStmtContext): Node {
         if (ctx.expression() != null) {
             val operand = visitExpression(ctx.expression())
 
-            if (ctx.loopParameters().IDENTIFIER().size == 2) {
+            if (ctx.loopParameters() == null) {
+                return OperandLoop(operand=operand, statements = visitBlock(ctx.block()).nodes)
+
+            } else if (ctx.loopParameters().IDENTIFIER().size == 2) {
                 val indexOperand = Parameter(name = ctx.loopParameters().IDENTIFIER(0).text, type = IntegerType())
-                val valueOperand = Parameter(name = ctx.loopParameters().IDENTIFIER(1).text, type = VoidType())
+                val valueOperand = Parameter(name = ctx.loopParameters().IDENTIFIER(1).text, type = AnyType())
 
                 return OperandLoop(operand = operand, index = indexOperand, item = valueOperand, statements = visitBlock(ctx.block()).nodes)
             } else {
-                val valueOperand = Parameter(name = ctx.loopParameters().IDENTIFIER(0).text, type = VoidType())
+                val valueOperand = Parameter(name = ctx.loopParameters().IDENTIFIER(0).text, type = AnyType())
 
                 return OperandLoop(operand = operand, item = valueOperand, statements = visitBlock(ctx.block()).nodes)
             }

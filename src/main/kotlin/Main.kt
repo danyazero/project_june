@@ -1,15 +1,7 @@
 package com.danyazero
 
-import com.danyazero.expression.AdditionExpression
-import com.danyazero.expression.ShiftRightExpression
-import com.danyazero.expression.ValueExpression
 import com.danyazero.model.Node
-import com.danyazero.node.*
-import com.danyazero.type.ArrayType
-import com.danyazero.type.IntegerType
-import com.danyazero.type.StringType
 import com.danyazero.utils.GenerationContext
-import com.danyazero.node.Parameter
 import june.JuneLexer
 import june.JuneParser
 import org.antlr.v4.runtime.CharStreams
@@ -18,9 +10,11 @@ import org.objectweb.asm.ClassWriter
 import java.io.FileOutputStream
 
 fun main() {
+    val imports = HashMap<String, String>()
+    imports["String"] = "java/lang/String"
 
     val generationContext = GenerationContext(
-        imports = mutableMapOf(),
+        imports = imports,
         classWriter = ClassWriter(ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS)
     )
 

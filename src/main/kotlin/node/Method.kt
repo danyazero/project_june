@@ -74,7 +74,7 @@ class Method(
         if (type is ArrayType) {
             return "[" + getParameter(type.child, ctx)
         } else if (type is ReferenceType<*>) {
-            return "L" + ctx.resolveImport(type.getName()).replace("\\.".toRegex(), "/") + ";"
+            return "L" + type.getName() + ";"
         }
 
         return null
