@@ -1,11 +1,9 @@
 class Main {
     fn main(args []string) {
-        array := string["Hello", " ", "World", "!"]
-
-        str := ""
-        for in array {
-            str += it
+        a := 0
+        loop {
+            println!(a)
+            a += 1
         }
-        println!(str)
     }
 }

@@ -28,10 +28,13 @@ class OperandLoop(
 
         val exitLabel = Label()
         val enterLabel = Label()
-
         ctx.enterScope()
+
+        //loop body expression
         Variable(index.name, index.type, ValueExpression.of(0)).produce(ctx)
         ctx.defineVariable(item.name, operandType.child)
+
+        // loop body start
         ctx.getMethodVisitor().visitLabel(enterLabel)
         Operand(index.name, true).produce(ctx)
 
@@ -50,6 +53,8 @@ class OperandLoop(
         } else {
             throw RuntimeException("Unsupported index type (${index.type})")
         }
+
+        // loop body end
 
         ctx.getMethodVisitor().visitJumpInsn(Opcodes.GOTO, enterLabel)
         ctx.exitScope()

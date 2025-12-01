@@ -110,14 +110,19 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
             val right = visitExpression(ctx.expression(1))
 
             val expression = when {
-                ctx.PLUS()          != null -> ::AdditionExpression
-                ctx.STAR()          != null -> ::MultiplicationExpression
-                ctx.DIV()           != null -> ::DivisionExpression
-                ctx.MINUS()         != null -> ::SubstructionExpression
-                ctx.LSHIFT()        != null -> ::ShiftLeftExpression
-                ctx.RSHIFT()        != null -> ::ShiftRightExpression
-                ctx.LRSHIFT()       != null -> ::LogicalShiftRightExpression
-                ctx.MOD()           != null -> ::RemainderExpression
+                ctx.PLUS()              != null -> ::AdditionExpression
+                ctx.STAR()              != null -> ::MultiplicationExpression
+                ctx.DIV()               != null -> ::DivisionExpression
+                ctx.MINUS()             != null -> ::SubstructionExpression
+                ctx.LSHIFT()            != null -> ::ShiftLeftExpression
+                ctx.RSHIFT()            != null -> ::ShiftRightExpression
+                ctx.LRSHIFT()           != null -> ::LogicalShiftRightExpression
+                ctx.MOD()               != null -> ::RemainderExpression
+                ctx.EQUALS()            != null -> ::EqualExpression
+                ctx.LESS()              != null -> ::LessExpression
+                ctx.GREATER()           != null -> ::GreaterExpression
+                ctx.LESS_OR_EQUALS()    != null -> ::LessOrEqualExpression
+                ctx.GREATER_OR_EQUALS() != null -> ::GreaterOrEqualExpression
                 else -> throw RuntimeException("Unsupported expression operand")
             }
 
@@ -161,6 +166,20 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
 
 
         throw RuntimeException("Unhandled assignment: " + ctx.getText())
+    }
+
+    override fun visitLoopStmt(ctx: JuneParser.LoopStmtContext): Node {
+        if (ctx.expression() != null && ctx.expression().rel_op != null) {
+            val conditionExpression = visitExpression(ctx.expression())
+
+            if (conditionExpression is ConditionExpression){
+                return Loop(condition = conditionExpression, statements = visitBlock(ctx.block()).nodes)
+            } else {
+                throw RuntimeException("Unhandled loop condition expression")
+            }
+        }
+
+        return Loop(statements = visitBlock(ctx.block()).nodes)
     }
 
     override fun visitForLoopStmt(ctx: JuneParser.ForLoopStmtContext): Node {

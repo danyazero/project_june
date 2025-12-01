@@ -4,6 +4,7 @@ CONST       : 'const';
 VAR         : 'var';
 FUNC        : 'fn';
 FOR         : 'for';
+LOOP        : 'loop';
 IN          : 'in';
 TO          : 'to';
 UNTIL       : 'until';

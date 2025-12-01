@@ -44,6 +44,7 @@ statement
     | macroStmt
     | assignment
     | expression
+    | loopStmt
     | forLoopStmt
     | returnStmt
     ;
@@ -218,6 +219,10 @@ typeList
 
 arguments
     : L_PAREN ((expressionList | type_ (COMMA expressionList)?) ELLIPSIS? COMMA?)? R_PAREN
+    ;
+
+loopStmt
+    : LOOP expression? block
     ;
 
 forLoopStmt
