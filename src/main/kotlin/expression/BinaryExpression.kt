@@ -10,8 +10,8 @@ abstract class BinaryExpression(
 ) : Expression {
 
     fun apply(ctx: GenerationContext, producer: (Type<*>) -> Unit) {
-            left.produce(ctx)
-            right.produce(ctx)
+        left.produce(ctx)
+        right.produce(ctx)
 
         left.getType(ctx).let {
             if (it.javaClass != right.getType(ctx).javaClass) {

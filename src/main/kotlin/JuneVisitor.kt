@@ -3,7 +3,9 @@ package com.danyazero
 import com.danyazero.expression.*
 import com.danyazero.model.Expression
 import com.danyazero.model.Node
+import com.danyazero.model.ToRange
 import com.danyazero.model.Type
+import com.danyazero.model.UntilRange
 import com.danyazero.node.*
 import com.danyazero.node.Array
 import com.danyazero.type.*
@@ -182,7 +184,26 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
         return Loop(statements = visitBlock(ctx.block()).nodes)
     }
 
-    override fun visitForLoopStmt(ctx: JuneParser.ForLoopStmtContext): Node {
+    override fun visitRangeLoopStmt(ctx: JuneParser.RangeLoopStmtContext): Node {
+
+
+        val left = visitExpression(ctx.range().expression(0))
+        val right = visitExpression(ctx.range().expression(1))
+
+        val range = when {
+            ctx.range().UNTIL() != null -> ::UntilRange
+            ctx.range().TO() != null -> ::ToRange
+            else -> throw RuntimeException("Unhandled range expression")
+        }
+
+        return RangeLoop(
+            index = ctx.IDENTIFIER().text,
+            range = range(left, right),
+            statements = visitBlock(ctx.block()).nodes
+        )
+    }
+
+    override fun visitOperandLoopStmt(ctx: JuneParser.OperandLoopStmtContext): Node {
         if (ctx.expression() != null) {
             val operand = visitExpression(ctx.expression())
 

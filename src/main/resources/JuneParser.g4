@@ -45,8 +45,9 @@ statement
     | assignment
     | incDecStmt
     | expression
+    | rangeLoopStmt
+    | operandLoopStmt
     | loopStmt
-    | forLoopStmt
     | returnStmt
     ;
 
@@ -130,10 +131,6 @@ index
 
 macroStmt
     : IDENTIFIER EXCLAMATION arguments
-    ;
-
-methodExpr
-    : type_ DOT IDENTIFIER
     ;
 
 conversion
@@ -230,8 +227,12 @@ loopStmt
     : LOOP expression? block
     ;
 
-forLoopStmt
-    : FOR loopParameters? IN (expression | range) block
+operandLoopStmt
+    : FOR loopParameters? IN expression block
+    ;
+
+rangeLoopStmt
+    : FOR IDENTIFIER IN range block
     ;
 
 loopParameters

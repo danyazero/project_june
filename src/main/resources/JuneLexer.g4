@@ -6,8 +6,8 @@ FUNC        : 'fn';
 FOR         : 'for';
 LOOP        : 'loop';
 IN          : 'in';
-TO          : 'to';
-UNTIL       : 'until';
+TO          : '..';
+UNTIL       : '..<';
 NIL_LIT     : 'null' -> mode(NLSEMI);
 RETURN      : 'return' -> mode(NLSEMI);
 CLASS       : 'class';
@@ -63,7 +63,7 @@ HEX_LIT     : '0' [xX] ('_'? HEX_DIGIT)+    -> mode(NLSEMI);
 
 FLOAT_LIT: (DECIMAL_FLOAT_LIT | HEX_FLOAT_LIT) -> mode(NLSEMI);
 
-DECIMAL_FLOAT_LIT: DECIMALS ('.' DECIMALS? EXPONENT? | EXPONENT) | '.' DECIMALS EXPONENT?;
+DECIMAL_FLOAT_LIT: DECIMALS '.' DECIMALS;
 
 HEX_FLOAT_LIT: '0' [xX] HEX_MANTISSA HEX_EXPONENT;
 

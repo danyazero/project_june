@@ -4,7 +4,6 @@ import com.danyazero.expression.LessExpression
 import com.danyazero.expression.ValueExpression
 import com.danyazero.model.Expression
 import com.danyazero.model.Node
-import com.danyazero.type.AnyType
 import com.danyazero.type.ArrayType
 import com.danyazero.type.IntegerType
 import com.danyazero.utils.GenerationContext
@@ -31,9 +30,12 @@ class OperandLoop(
 
         ctx.getMethodVisitor().visitLabel(enterLabel)
 
-        val condition = LessExpression(left = Operand(index, true), right = Length(operand))
-        condition.target(exitLabel)
-        condition.produce(ctx)
+        val conditionExpression = LessExpression(
+            left = Operand(index, true),
+            right = Length(operand),
+        )
+        conditionExpression.target(exitLabel)
+        conditionExpression.produce(ctx)
 
         Variable(item, operandType.child, ArrayValue(operand = operand, index = Operand(index, true))).produce(ctx)
 
