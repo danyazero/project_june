@@ -3,8 +3,8 @@ class Main {
         array := [12, 5, 3, 24]
         result := 0
 
-        for index in 0..<4 {
-            result += index * array[index]
+        for (index, item) in array {
+            result += index * item
         }
         print!(result)
     }
