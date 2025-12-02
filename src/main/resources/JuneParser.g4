@@ -43,6 +43,7 @@ statement
     : declaration
     | macroStmt
     | assignment
+    | incDecStmt
     | expression
     | loopStmt
     | forLoopStmt
@@ -68,7 +69,7 @@ declaration
     ;
 
 arrayDecl
-    : type_ L_BRACKET expressionList R_BRACKET
+    : L_BRACKET expressionList R_BRACKET
     ;
 
 varDecl
@@ -93,6 +94,10 @@ varSpec
 
 expressionList
     : expression (COMMA expression)*
+    ;
+
+incDecStmt
+    : expression (PLUS_PLUS | MINUS_MINUS)
     ;
 
 expression

@@ -2,6 +2,7 @@ package com.danyazero.node
 
 import com.danyazero.model.Expression
 import com.danyazero.model.Type
+import com.danyazero.model.VariableInfo
 import com.danyazero.utils.GenerationContext
 
 class Operand(
@@ -10,13 +11,7 @@ class Operand(
 ) : Expression {
 
     override fun produce(ctx: GenerationContext) {
-        val variable = if (local) {
-            ctx.resolveLocalVariable(name)
-        } else {
-            ctx.resolveVariable(name)
-        }
-
-        variable?.let {
+        resolveVariable(ctx, name)?.let {
             it.type.load(
                 ctx.getMethodVisitor(),
                 it.index
@@ -25,11 +20,19 @@ class Operand(
     }
 
     override fun getType(ctx: GenerationContext): Type<*> {
-        ctx.resolveVariable(name)?.let {
+        resolveVariable(ctx, name)?.let {
             return it.type
         }
 
         throw RuntimeException("Could not resolve variable")
+    }
+
+    fun resolveVariable(ctx: GenerationContext, name: String): VariableInfo? {
+        return if (local) {
+            ctx.resolveLocalVariable(name)
+        } else {
+            ctx.resolveVariable(name)
+        }
     }
 
     override fun toString(): String {

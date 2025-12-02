@@ -1,9 +1,11 @@
 class Main {
     fn main(args []string) {
-        a := 0
-        loop {
-            println!(a)
-            a += 1
+        array := [12, 5, 3, 24]
+        result := 0
+
+        for (index, item) in array {
+            result += index * item
         }
+        print!(result)
     }
 }

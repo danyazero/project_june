@@ -79,24 +79,24 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
 
     override fun visitShortVarDecl(ctx: JuneParser.ShortVarDeclContext): Node {
         return Variable(
-            name=ctx.identifierList().getText(),
-            value=visitExpression(ctx.expressionList().expression(0))
+            name = ctx.identifierList().getText(),
+            value = visitExpression(ctx.expressionList().expression(0))
         )
     }
 
     override fun visitType_(ctx: JuneParser.Type_Context): TypeNode {
-         if (ctx.IDENTIFIER() != null) {
-             return TypeNode(getType(ctx.IDENTIFIER().text))
+        if (ctx.IDENTIFIER() != null) {
+            return TypeNode(getType(ctx.IDENTIFIER().text))
         } else if (ctx.arrayType() != null) {
             return TypeNode(ArrayType(visitType_(ctx.arrayType().type_()).type))
-         }
+        }
 
         throw RuntimeException("Illegal Type")
     }
 
     override fun visitMacroStmt(ctx: JuneParser.MacroStmtContext): Node {
-        return if (ctx.IDENTIFIER().text == "println") {
-            PrintlnMacros(visitExpression(ctx.arguments().expressionList().expression(0)))
+        return if (ctx.IDENTIFIER().text == "print") {
+            PrintMacros(visitExpression(ctx.arguments().expressionList().expression(0)))
         } else throw RuntimeException("Unsupported macros")
     }
 
@@ -110,18 +110,18 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
             val right = visitExpression(ctx.expression(1))
 
             val expression = when {
-                ctx.PLUS()              != null -> ::AdditionExpression
-                ctx.STAR()              != null -> ::MultiplicationExpression
-                ctx.DIV()               != null -> ::DivisionExpression
-                ctx.MINUS()             != null -> ::SubstructionExpression
-                ctx.LSHIFT()            != null -> ::ShiftLeftExpression
-                ctx.RSHIFT()            != null -> ::ShiftRightExpression
-                ctx.LRSHIFT()           != null -> ::LogicalShiftRightExpression
-                ctx.MOD()               != null -> ::RemainderExpression
-                ctx.EQUALS()            != null -> ::EqualExpression
-                ctx.LESS()              != null -> ::LessExpression
-                ctx.GREATER()           != null -> ::GreaterExpression
-                ctx.LESS_OR_EQUALS()    != null -> ::LessOrEqualExpression
+                ctx.PLUS() != null -> ::AdditionExpression
+                ctx.STAR() != null -> ::MultiplicationExpression
+                ctx.DIV() != null -> ::DivisionExpression
+                ctx.MINUS() != null -> ::SubstructionExpression
+                ctx.LSHIFT() != null -> ::ShiftLeftExpression
+                ctx.RSHIFT() != null -> ::ShiftRightExpression
+                ctx.LRSHIFT() != null -> ::LogicalShiftRightExpression
+                ctx.MOD() != null -> ::RemainderExpression
+                ctx.EQUALS() != null -> ::EqualExpression
+                ctx.LESS() != null -> ::LessExpression
+                ctx.GREATER() != null -> ::GreaterExpression
+                ctx.LESS_OR_EQUALS() != null -> ::LessOrEqualExpression
                 ctx.GREATER_OR_EQUALS() != null -> ::GreaterOrEqualExpression
                 else -> throw RuntimeException("Unsupported expression operand")
             }
@@ -146,12 +146,12 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
 
 
                 val expression = when {
-                    operation.PLUS()          != null -> ::AdditionExpression
-                    operation.MINUS()         != null -> ::SubstructionExpression
-                    operation.STAR()          != null -> ::MultiplicationExpression
-                    operation.DIV()           != null -> ::DivisionExpression
-                    operation.MOD()           != null -> ::RemainderExpression
-                    else                              -> null
+                    operation.PLUS() != null -> ::AdditionExpression
+                    operation.MINUS() != null -> ::SubstructionExpression
+                    operation.STAR() != null -> ::MultiplicationExpression
+                    operation.DIV() != null -> ::DivisionExpression
+                    operation.MOD() != null -> ::RemainderExpression
+                    else -> null
                 }
 
                 if (expression != null) {
@@ -172,7 +172,7 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
         if (ctx.expression() != null && ctx.expression().rel_op != null) {
             val conditionExpression = visitExpression(ctx.expression())
 
-            if (conditionExpression is ConditionExpression){
+            if (conditionExpression is ConditionExpression) {
                 return Loop(condition = conditionExpression, statements = visitBlock(ctx.block()).nodes)
             } else {
                 throw RuntimeException("Unhandled loop condition expression")
@@ -186,30 +186,46 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
         if (ctx.expression() != null) {
             val operand = visitExpression(ctx.expression())
 
-            if (ctx.loopParameters() == null) {
-                return OperandLoop(operand=operand, statements = visitBlock(ctx.block()).nodes)
-
+            return if (ctx.loopParameters() == null) {
+                OperandLoop(operand = operand, statements = visitBlock(ctx.block()).nodes)
             } else if (ctx.loopParameters().IDENTIFIER().size == 2) {
-                val indexOperand = Parameter(name = ctx.loopParameters().IDENTIFIER(0).text, type = IntegerType())
-                val valueOperand = Parameter(name = ctx.loopParameters().IDENTIFIER(1).text, type = AnyType())
-
-                return OperandLoop(operand = operand, index = indexOperand, item = valueOperand, statements = visitBlock(ctx.block()).nodes)
+                OperandLoop(
+                    operand = operand,
+                    index = ctx.loopParameters().IDENTIFIER(0).text,
+                    item = ctx.loopParameters().IDENTIFIER(1).text,
+                    statements = visitBlock(ctx.block()).nodes
+                )
             } else {
-                val valueOperand = Parameter(name = ctx.loopParameters().IDENTIFIER(0).text, type = AnyType())
-
-                return OperandLoop(operand = operand, item = valueOperand, statements = visitBlock(ctx.block()).nodes)
+                OperandLoop(operand = operand, item = ctx.loopParameters().IDENTIFIER(0).text, statements = visitBlock(ctx.block()).nodes)
             }
         }
 
         throw RuntimeException("Unsupported loop")
     }
 
+    override fun visitIncDecStmt(ctx: JuneParser.IncDecStmtContext): Node {
+        val operand = visitExpression(ctx.expression())
+        if (operand !is Operand) throw RuntimeException("Unhandled operand type.")
+
+        return when {
+            ctx.PLUS_PLUS() != null -> AssignExpression(
+                operand = operand,
+                expression = AdditionExpression(left = operand, right = ValueExpression.of(1))
+            )
+
+            ctx.MINUS_MINUS() != null -> AssignExpression(
+                operand = operand,
+                expression = SubstructionExpression(left = operand, right = ValueExpression.of(1))
+            )
+
+            else -> throw RuntimeException("Unsupported expression operand")
+        }
+    }
+
     override fun visitArrayDecl(ctx: JuneParser.ArrayDeclContext): Array {
-        val arrayType = visitType_(ctx.type_())
         val expressionList = visitExpressionList(ctx.expressionList())
 
         return Array(
-            type = ArrayType(arrayType.type, expressionList.items.size),
             items = expressionList.items
         )
     }

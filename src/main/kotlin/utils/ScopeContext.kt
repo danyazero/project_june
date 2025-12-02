@@ -32,6 +32,7 @@ open class ScopeContext {
     }
 
     fun resolveVariable(name: String): VariableInfo? {
+        if (name == "_") throw IllegalStateException("Variable can't be resolved")
         for (scope in scopes) {
             return scope.resolve(name) ?: continue
         }

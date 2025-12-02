@@ -1,20 +1,19 @@
 package com.danyazero.node
 
 import com.danyazero.model.Expression
+import com.danyazero.model.NumberType
 import com.danyazero.model.Type
 import com.danyazero.type.ArrayType
 import com.danyazero.utils.GenerationContext
 
 class Array(
     val items: List<Expression>,
-    private val type: ArrayType
 ) : Expression {
 
     override fun produce(ctx: GenerationContext) {
-        items.forEach {
-            if (it.getType(ctx).javaClass != type.child.javaClass)
-                throw RuntimeException("Array value expression has wrong type '${it.getType(ctx).javaClass}'")
-        }
+        val type = getType(ctx)
+        if (type !is ArrayType) throw RuntimeException("Unknown error")
+
         type.postack(ctx.getMethodVisitor(), items.size)
 
         for ((index, item) in items.withIndex()) {
@@ -24,10 +23,17 @@ class Array(
     }
 
     override fun getType(ctx: GenerationContext): Type<*> {
-        return type
+        val itemType = items.first().getType(ctx)
+        items.forEach {
+            if (it.getType(ctx).javaClass != itemType.javaClass) {
+                throw RuntimeException("Array value expression has wrong type '${it.getType(ctx).javaClass}'")
+            }
+        }
+
+        return ArrayType(child = itemType, length = items.size)
     }
 
     override fun toString(): String {
-        return "Array(items=$items, type=$type)"
+        return "Array(items=$items)"
     }
 }
