@@ -1,11 +1,11 @@
-class Main {
-    fn main(args []string) {
-        array := [12, 5, 3, 24]
+pub class Main {
+    pub fn* main(args []string) {
+        array := [12, 6, 4, 24]
         result := 0
 
         for (index, item) in array {
             result += index * item
         }
-        print!(result)
+        print!(result >> 1)
     }
 }

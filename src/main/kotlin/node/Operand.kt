@@ -11,7 +11,7 @@ class Operand(
 ) : Expression {
 
     override fun produce(ctx: GenerationContext) {
-        resolveVariable(ctx, name)?.let {
+        resolveVariable(ctx)?.let {
             it.type.load(
                 ctx.getMethodVisitor(),
                 it.index
@@ -20,22 +20,23 @@ class Operand(
     }
 
     override fun getType(ctx: GenerationContext): Type<*> {
-        resolveVariable(ctx, name)?.let {
+        resolveVariable(ctx)?.let {
             return it.type
         }
 
         throw RuntimeException("Could not resolve variable")
     }
 
-    fun resolveVariable(ctx: GenerationContext, name: String): VariableInfo? {
-        return if (local) {
-            ctx.resolveLocalVariable(name)
-        } else {
-            ctx.resolveVariable(name)
+        fun resolveVariable(ctx: GenerationContext): VariableInfo? {
+            return if (local) {
+                ctx.resolveLocalVariable(name)
+            } else {
+                ctx.resolveVariable(name)
+            }
         }
-    }
 
     override fun toString(): String {
-        return "Operand(name='$name')"
+        return "Operand(name='$name', local=$local)"
     }
+
 }

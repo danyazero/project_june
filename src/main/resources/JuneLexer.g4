@@ -102,7 +102,6 @@ INTERPRETED_STRING_LIT : '"' (~["\\] | ESCAPED_VALUE)* '"' -> mode(NLSEMI);
 // Hidden tokens
 
 WS           : [ \t]+        -> channel(HIDDEN);
-COMMENT      : '/*' .*? '*/' -> channel(HIDDEN);
 TERMINATOR   : [\r\n]+       -> channel(HIDDEN);
 LINE_COMMENT : '//' ~[\r\n]* -> channel(HIDDEN);
 
@@ -142,10 +141,9 @@ mode NLSEMI;
 // Treat whitespace as normal
 WS_NLSEMI: [ \t]+ -> channel(HIDDEN);
 // Ignore any comments that only span one line
-COMMENT_NLSEMI      : '/*' ~[\r\n]*? '*/' -> channel(HIDDEN);
 LINE_COMMENT_NLSEMI : '//' ~[\r\n]*       -> channel(HIDDEN);
 // Emit an EOS token for any newlines, semicolon, multiline comments or the EOF and
 //return to normal lexing
-EOS: ([\r\n]+ | ';' | '/*' .*? '*/' | EOF) -> mode(DEFAULT_MODE);
+EOS: ([\r\n]+ | ';' | EOF) -> mode(DEFAULT_MODE);
 // Did not find an EOS, so go back to normal lexing
 OTHER: -> mode(DEFAULT_MODE), channel(HIDDEN);

@@ -20,10 +20,10 @@ open class ScopeContext {
         scopes.pop()
     }
 
-    fun defineVariable(name: String, type: Type<*>): Short {
+    fun defineVariable(name: String, isConstant: Boolean = false, type: Type<*>): Short {
         scopes.peek()?.let {
             val variableIndex = this.allocateLocal(type)
-            it.define(name, type, variableIndex)
+            it.define(name, type, isConstant, variableIndex)
 
             return variableIndex
         }

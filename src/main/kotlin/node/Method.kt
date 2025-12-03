@@ -13,6 +13,7 @@ import java.util.function.Consumer
 
 class Method(
     val name: String,
+    val modifiers: Int = Opcodes.ACC_PRIVATE,
     val parameters: List<Parameter>,
     val statementList: List<Node>,
     val returnTypes: List<TypeNode>
@@ -21,7 +22,7 @@ class Method(
     override fun produce(ctx: GenerationContext) {
         val descriptor = getDescriptor(ctx)
         val methodVisitor = ctx.getClassWriter()
-            .visitMethod(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, name, descriptor, null, null)
+            .visitMethod(modifiers, name, descriptor, null, null)
 
         ctx.setMethodVisitor(methodVisitor)
         ctx.enterScope()

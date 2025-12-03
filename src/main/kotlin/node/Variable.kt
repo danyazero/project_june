@@ -10,13 +10,15 @@ import java.lang.RuntimeException
 class Variable(
     private val name: String,
     private val type: Type<*>?=null,
-    val value: Expression
+    val value: Expression,
+    val isConstant: Boolean = false
 ) : Node, IVariable {
 
     override fun produce(ctx: GenerationContext) {
-        if (type != null && type.javaClass != value.getType(ctx).javaClass) throw RuntimeException("Variable can't be produce: Provided expression has type ${type.javaClass.name}")
+        println(type?.javaClass?.name + " " + value.getType(ctx).javaClass.name)
+        if (this.type != null && !Type.deepType(this.type, value.getType(ctx))) throw RuntimeException("Variable can't be produce: Provided expression has type wrong type")
         value.produce(ctx)
-        val variableIndex = ctx.defineVariable(name, value.getType(ctx))
+        val variableIndex = ctx.defineVariable(name, isConstant, value.getType(ctx))
         value.getType(ctx).store(ctx.getMethodVisitor(), variableIndex)
     }
 

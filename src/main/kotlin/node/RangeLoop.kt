@@ -29,7 +29,7 @@ class RangeLoop(
             is ToRange -> ::LessOrEqualExpression
             is UntilRange -> ::LessExpression
             else -> throw RuntimeException("Unexpected range: $range")
-        }(Operand(index), range.end)
+        }(Operand(index, true), range.end)
 
         rangeExpression.target(exitLabel)
         rangeExpression.produce(ctx)

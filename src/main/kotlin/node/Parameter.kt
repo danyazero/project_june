@@ -10,7 +10,7 @@ class Parameter(
 ) : Node {
 
     override fun produce(ctx: GenerationContext) {
-        ctx.defineVariable(name, type)
+        ctx.defineVariable(name = name, type = type)
     }
 
     override fun toString(): String {

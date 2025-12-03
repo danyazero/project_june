@@ -13,11 +13,12 @@ class AssignExpression(
 ) : Node {
 
     override fun produce(ctx: GenerationContext) {
+        val variable = operand.resolveVariable(ctx) ?: throw RuntimeException("Variable ${operand.name} not found")
+        if (variable.isConstant) throw RuntimeException("Variable ${variable.name} is constant and cannot be changed")
 
         expression.produce(ctx)
         operand.getType(ctx).let {
             if (it is PrimitiveType<*> || it is StringType) {
-                val variable = ctx.resolveVariable(operand.name) ?: throw RuntimeException("Variable ${operand.name} not found")
                 it.store(ctx.getMethodVisitor(), variable.index)
                 return
             }

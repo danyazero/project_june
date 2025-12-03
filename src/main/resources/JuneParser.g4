@@ -28,7 +28,7 @@ classBodyDeclaration
     ;
 
 functionDecl
-    : FUNC IDENTIFIER signature block?
+    : modifier* FUNC STAR? IDENTIFIER signature block?
     ;
 
 block

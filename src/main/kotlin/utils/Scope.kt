@@ -8,10 +8,11 @@ class Scope(
 ) {
     private val variables = mutableMapOf<String, VariableInfo>()
 
-    fun define(name: String, type: Type<*>, localIndex: Short) {
+    fun define(name: String, type: Type<*>, isConstant: Boolean, localIndex: Short) {
         variables[name] = VariableInfo(
             name,
             type,
+            isConstant,
             localIndex
         )
     }

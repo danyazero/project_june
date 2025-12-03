@@ -11,6 +11,7 @@ import com.danyazero.node.Array
 import com.danyazero.type.*
 import june.JuneParser
 import june.JuneParserBaseVisitor
+import org.objectweb.asm.Opcodes
 
 class JuneVisitor : JuneParserBaseVisitor<Node>() {
     override fun visitSourceFile(ctx: JuneParser.SourceFileContext): Node {
@@ -42,9 +43,20 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
         } else {
             listOf()
         }
+        var modifiers = ctx.modifier().map {
+            when  {
+                it.PUBLIC() != null -> Opcodes.ACC_PUBLIC
+                else -> Opcodes.ACC_PRIVATE
+            }
+        }.sum()
+
+        if (ctx.STAR() != null) {
+            modifiers += Opcodes.ACC_STATIC
+        }
 
         return Method(
             name = ctx.IDENTIFIER().text,
+            modifiers = modifiers,
             returnTypes = resultType,
             parameters = visitParameters(ctx.signature().parameters()).parameters,
             statementList = visitBlock(ctx.block()).nodes
@@ -73,9 +85,18 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
 
     override fun visitVarSpec(ctx: JuneParser.VarSpecContext): Node {
         return Variable(
-            ctx.identifierList().getText(),
-            if (ctx.type_() != null) visitType_(ctx.type_()).type else null,
-            visitExpression(ctx.expressionList().expression(0))
+            name = ctx.identifierList().getText(),
+            type = if (ctx.type_() != null) visitType_(ctx.type_()).type else null,
+            value = visitExpression(ctx.expressionList().expression(0)),
+        )
+    }
+
+    override fun visitConstSpec(ctx: JuneParser.ConstSpecContext): Node {
+        return Variable(
+            name = ctx.identifierList().getText(),
+            type = if (ctx.type_() != null) visitType_(ctx.type_()).type else null,
+            value = visitExpression(ctx.expressionList().expression(0)),
+            isConstant = true
         )
     }
 
