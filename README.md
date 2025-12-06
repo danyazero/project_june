@@ -1,4 +1,4 @@
-# Another JDK based programming language
+# Another JVM based programming language
 This documentation describes the core syntax and features of the language.
 
 ## Classes
