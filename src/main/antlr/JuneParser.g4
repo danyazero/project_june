@@ -2,7 +2,7 @@ parser grammar JuneParser;
 
 options {
     tokenVocab = JuneLexer;
-    superClass = JuneParserBase;
+    superClass = june.JuneParserBase;
 }
 identifier : IDENTIFIER ;
 

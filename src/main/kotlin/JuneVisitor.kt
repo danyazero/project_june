@@ -5,8 +5,6 @@ import com.danyazero.model.*
 import com.danyazero.node.*
 import com.danyazero.node.Array
 import com.danyazero.type.*
-import june.JuneParser
-import june.JuneParserBaseVisitor
 import org.objectweb.asm.Opcodes
 
 class JuneVisitor : JuneParserBaseVisitor<Node>() {
