@@ -3,6 +3,7 @@ lexer grammar JuneLexer;
 CONST       : 'const';
 VAR         : 'var';
 FUNC        : 'fn';
+CONSTRUCTOR : 'constructor';
 FOR         : 'for';
 LOOP        : 'loop';
 IN          : 'in';

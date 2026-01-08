@@ -118,4 +118,8 @@ class IntegerType : NumberType<Int> {
     override fun getType() : Int {
         return Opcodes.T_INT
     }
+
+    override fun getDescriptor(): String {
+        return "I"
+    }
 }

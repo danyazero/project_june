@@ -99,6 +99,10 @@ class DoubleType : NumberType<Double> {
         return Opcodes.T_DOUBLE
     }
 
+    override fun getDescriptor(): String {
+        return "D"
+    }
+
     override fun getSize(): Short {
         return 2
     }

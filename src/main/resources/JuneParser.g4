@@ -24,7 +24,15 @@ classBody
 
 classBodyDeclaration
     : SEMI
-    | (functionDecl) eos
+    | (constructorDecl | functionDecl) eos
+    ;
+
+newInstance
+    : IDENTIFIER L_CURLY expressionList? R_CURLY
+    ;
+
+constructorDecl
+    : CONSTRUCTOR parameters block?
     ;
 
 functionDecl
@@ -102,7 +110,8 @@ incDecStmt
     ;
 
 expression
-    : primaryExpr
+    : newInstance
+    | primaryExpr
     | arrayDecl
     | unary_op = (PLUS | MINUS | EXCLAMATION | CARET | STAR | AMPERSAND) expression
     | expression mul_op = (STAR | DIV | MOD | LSHIFT | RSHIFT | LRSHIFT | AMPERSAND) expression
@@ -121,8 +130,13 @@ expression
 
 primaryExpr
     : ( {this.isOperand()}? operand
-    | {this.isConversion()}? conversion )
-    ( DOT IDENTIFIER | index)*
+    | {this.isConversion()}? conversion
+    | {this.isMethodExpr()}? methodExpr )
+    ( DOT IDENTIFIER | index | arguments)*
+    ;
+
+methodExpr
+    : type_ DOT IDENTIFIER
     ;
 
 index
@@ -220,7 +234,7 @@ typeList
     ;
 
 arguments
-    : L_PAREN ((expressionList | type_ (COMMA expressionList)?) ELLIPSIS? COMMA?)? R_PAREN
+    : L_PAREN expressionList? R_PAREN
     ;
 
 loopStmt

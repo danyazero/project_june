@@ -9,7 +9,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.objectweb.asm.ClassWriter
 import java.io.FileOutputStream
 
-fun main() {
+fun main(args: Array<String>) {
     val imports = HashMap<String, String>()
     imports["String"] = "java/lang/String"
 
@@ -18,7 +18,7 @@ fun main() {
         classWriter = ClassWriter(ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS)
     )
 
-    val tree = parseTree()
+    val tree = parseTree("/Users/daniilmozzhukhin/IdeaProjects/project_june/src/main/resources/main.ju")
     println(tree)
     tree.produce(generationContext)
     saveClass(generationContext)
@@ -32,9 +32,8 @@ fun saveClass(ctx: GenerationContext) {
     }
 }
 
-fun parseTree() : Node {
-    val fileName = "/Users/daniilmozzhukhin/IdeaProjects/project_june/src/main/resources/main.ju"
-    val input = CharStreams.fromFileName(fileName)
+fun parseTree(filename: String) : Node {
+    val input = CharStreams.fromFileName(filename)
 
     val lexer = JuneLexer(input)
     val tokens = CommonTokenStream(lexer)

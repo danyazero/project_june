@@ -3,6 +3,7 @@ package com.danyazero.type
 import com.danyazero.model.Type
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes
 
 class VoidType : Type<Void> {
 
@@ -19,7 +20,7 @@ class VoidType : Type<Void> {
     }
 
     override fun yield(mv: MethodVisitor) {
-        throw UnsupportedOperationException()
+        mv.visitInsn(Opcodes.RETURN)
     }
 
     override fun aload(mv: MethodVisitor) {

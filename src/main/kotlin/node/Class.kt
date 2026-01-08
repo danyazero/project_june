@@ -12,13 +12,16 @@ class Class(
 ) : Node {
 
     override fun produce(ctx: GenerationContext) {
-        ctx.getClassWriter().visit(Opcodes.V17, Opcodes.ACC_PUBLIC, name, null, "java/lang/Object", null)
+        ctx.getClassWriter().visit(Opcodes.V17, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, name, null, "java/lang/Object", null)
+        ctx.addImport(name)
+        ctx.className = name
 
+//        Constructor.default().produce(ctx)
 
-        val mv = ctx.getClassWriter().visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null)
-
-        val nextScope = GenerationContext(classWriter = ctx.getClassWriter(), methodVisitor = mv)
-        produceDefaultClassConstructor(nextScope.getMethodVisitor())
+//        val mv = ctx.getClassWriter().visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null)
+//
+//        val nextScope = GenerationContext(classWriter = ctx.getClassWriter(), methodVisitor = mv)
+//        produceDefaultClassConstructor(nextScope.getMethodVisitor())
 
         members.forEach(Consumer { m: Node -> m.produce(ctx) })
         ctx.getClassWriter().visitEnd()

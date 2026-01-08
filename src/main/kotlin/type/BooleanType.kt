@@ -14,6 +14,10 @@ class BooleanType : PrimitiveType<Boolean> {
         return 1
     }
 
+    override fun getDescriptor(): String {
+        return "Z"
+    }
+
     override fun postack(mv: MethodVisitor, value: Boolean) {
         if (value) {
             mv.visitInsn(Opcodes.ICONST_1)

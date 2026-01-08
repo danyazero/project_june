@@ -3,6 +3,7 @@ package com.danyazero.type
 import com.danyazero.model.ReferenceType
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes
 
 class ObjectType(
     private val name: String?,
@@ -16,11 +17,11 @@ class ObjectType(
     }
 
     override fun store(mv: MethodVisitor, index: Short) {
-        TODO("Not yet implemented")
+        mv.visitVarInsn(Opcodes.ASTORE, index.toInt())
     }
 
     override fun load(mv: MethodVisitor, index: Short) {
-        TODO("Not yet implemented")
+        mv.visitVarInsn(Opcodes.ALOAD, index.toInt())
     }
 
     override fun yield(mv: MethodVisitor) {
@@ -40,7 +41,7 @@ class ObjectType(
     }
 
     override fun getSize(): Short {
-        TODO("Not yet implemented")
+        return 1
     }
 
     override fun toString(): String {

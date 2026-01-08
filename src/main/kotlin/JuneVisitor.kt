@@ -1,11 +1,7 @@
 package com.danyazero
 
 import com.danyazero.expression.*
-import com.danyazero.model.Expression
-import com.danyazero.model.Node
-import com.danyazero.model.ToRange
-import com.danyazero.model.Type
-import com.danyazero.model.UntilRange
+import com.danyazero.model.*
 import com.danyazero.node.*
 import com.danyazero.node.Array
 import com.danyazero.type.*
@@ -32,19 +28,33 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
     override fun visitClassBodyDeclaration(ctx: JuneParser.ClassBodyDeclarationContext): Node {
         if (ctx.functionDecl() != null) {
             return visitFunctionDecl(ctx.functionDecl())
+        } else if (ctx.constructorDecl() != null) {
+            return visitConstructorDecl(ctx.constructorDecl())
         }
 
         throw RuntimeException("Unsupported class member")
     }
 
+    override fun visitConstructorDecl(ctx: JuneParser.ConstructorDeclContext): Node {
+        if (ctx.parameters() != null && ctx.block() != null) {
+            val constructorParameters = visitParameters(ctx.parameters())
+            val constructorStatements = visitBlock(ctx.block())
+
+            return Constructor(constructorParameters.parameters, constructorStatements.nodes)
+        }
+
+        return Constructor()
+    }
+
     override fun visitFunctionDecl(ctx: JuneParser.FunctionDeclContext): Node {
         val resultType = if (ctx.signature().result() != null) {
-            visitResult(ctx.signature().result()).types
+            visitResult(ctx.signature().result()).types[0]
         } else {
-            listOf()
+            TypeNode(VoidType())
         }
+
         var modifiers = ctx.modifier().map {
-            when  {
+            when {
                 it.PUBLIC() != null -> Opcodes.ACC_PUBLIC
                 else -> Opcodes.ACC_PRIVATE
             }
@@ -54,13 +64,25 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
             modifiers += Opcodes.ACC_STATIC
         }
 
+        val parameters = visitParameters(ctx.signature().parameters()).parameters
         return Method(
-            name = ctx.IDENTIFIER().text,
             modifiers = modifiers,
-            returnTypes = resultType,
-            parameters = visitParameters(ctx.signature().parameters()).parameters,
+            signature = Signature(ctx.IDENTIFIER().text, parameters, resultType),
             statementList = visitBlock(ctx.block()).nodes
         )
+    }
+
+    override fun visitReturnStmt(ctx: JuneParser.ReturnStmtContext): Return {
+        if (ctx.expressionList() != null) {
+            val expressionList = visitExpressionList(ctx.expressionList()).items
+            if (expressionList.isNotEmpty()) {
+                return Return(expressionList[0])
+            }
+
+            return Return()
+        }
+
+        return Return()
     }
 
     override fun visitBlock(ctx: JuneParser.BlockContext): NodeList {
@@ -150,6 +172,8 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
             }
 
             return expression(left, right)
+        } else if (ctx.newInstance() != null) {
+            return visitNewInstance(ctx.newInstance())
         } else if (ctx.arrayDecl() != null) {
             return visitArrayDecl(ctx.arrayDecl())
         } else if (ctx.primaryExpr() != null) {
@@ -157,6 +181,14 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
         }
 
         throw RuntimeException("Unsupported expression")
+    }
+
+    override fun visitNewInstance(ctx: JuneParser.NewInstanceContext): NewInstance {
+        if (ctx.expressionList() != null) {
+            return NewInstance(ctx.IDENTIFIER().text, visitExpressionList(ctx.expressionList()).items)
+        }
+
+        return NewInstance(ctx.IDENTIFIER().text, listOf())
     }
 
     override fun visitAssignment(ctx: JuneParser.AssignmentContext): AssignExpression {
@@ -238,7 +270,11 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
                     statements = visitBlock(ctx.block()).nodes
                 )
             } else {
-                OperandLoop(operand = operand, item = ctx.loopParameters().IDENTIFIER(0).text, statements = visitBlock(ctx.block()).nodes)
+                OperandLoop(
+                    operand = operand,
+                    item = ctx.loopParameters().IDENTIFIER(0).text,
+                    statements = visitBlock(ctx.block()).nodes
+                )
             }
         }
 
@@ -272,8 +308,21 @@ class JuneVisitor : JuneParserBaseVisitor<Node>() {
         )
     }
 
+    override fun visitArguments(ctx: JuneParser.ArgumentsContext): ExpressionList {
+        val arguments = java.util.ArrayList<Expression>()
+        for (el in ctx.expressionList().expression()) {
+            arguments.add(visitExpression(el))
+        }
+        return ExpressionList(arguments)
+    }
+
     override fun visitPrimaryExpr(ctx: JuneParser.PrimaryExprContext): Expression {
-        if (ctx.operand() != null && ctx.index() != null && !ctx.index().isEmpty()) {
+        if (ctx.methodExpr() != null) {
+            val obj = ctx.methodExpr().type_().IDENTIFIER().text
+            val method = ctx.methodExpr().IDENTIFIER().text
+
+            return VirtualMethodInvoke(Operand(obj), Signature(method, visitArguments(ctx.arguments(0)).items))
+        } else if (ctx.operand() != null && ctx.index() != null && !ctx.index().isEmpty()) {
             return ArrayValue(
                 visitOperand(ctx.operand()),
                 visitExpression(ctx.index(0).expression())
