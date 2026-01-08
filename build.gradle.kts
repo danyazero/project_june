@@ -2,6 +2,13 @@ plugins {
     java
     antlr
     kotlin("jvm") version "2.2.20"
+    id("com.gradleup.shadow") version "9.3.1"
+}
+
+tasks.shadowJar {
+    manifest {
+        attributes["Main-Class"] = "com.danyazero.MainKt"
+    }
 }
 
 repositories {
@@ -30,5 +37,5 @@ tasks {
 
 
 kotlin {
-    jvmToolchain(24)
+    jvmToolchain(21)
 }

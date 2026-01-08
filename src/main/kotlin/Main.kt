@@ -16,18 +16,14 @@ fun main(args: Array<String>) {
         classWriter = ClassWriter(ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS)
     )
 
-    val tree = parseTree("/Users/daniilmozzhukhin/IdeaProjects/project_june/src/main/resources/main.ju")
-    println(tree)
+    val tree = parseTree(args[0])
     tree.produce(generationContext)
-    saveClass(generationContext)
-}
+    val bytes = generationContext.getClassWriter().toByteArray()
 
-fun saveClass(ctx: GenerationContext) {
-    val bytes = ctx.getClassWriter().toByteArray()
-
-    FileOutputStream("Main.class").use { fos ->
+    FileOutputStream(generationContext.className + ".class").use { fos ->
         fos.write(bytes)
     }
+
 }
 
 fun parseTree(filename: String) : Node {
@@ -38,9 +34,6 @@ fun parseTree(filename: String) : Node {
     val parser = JuneParser(tokens)
     val tree = parser.sourceFile()
 
-    println(tree.toStringTree(parser))
-    val visitor = JuneVisitor()
 
-
-    return visitor.visit(tree)
+    return JuneVisitor().visit(tree)
 }

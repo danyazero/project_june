@@ -15,7 +15,6 @@ class Variable(
 ) : Node, IVariable {
 
     override fun produce(ctx: GenerationContext) {
-        println(type?.javaClass?.name + " " + value.getType(ctx).javaClass.name)
         if (this.type != null && !Type.deepType(this.type, value.getType(ctx))) throw RuntimeException("Variable can't be produce: Provided expression has type wrong type")
         value.produce(ctx)
         val variableIndex = ctx.defineVariable(name, isConstant, value.getType(ctx))

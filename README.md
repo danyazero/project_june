@@ -1,5 +1,53 @@
 # Another JVM based programming language
-This documentation describes the core syntax and features of the language.
+This is a small experimental JVM-based programming language created for learning and fun purposes. The language is implemented in Kotlin, uses ANTLR for parsing, and compiles directly into Java bytecode, which can be executed on any standard JVM.
+
+## Get Started
+This section describes the minimal steps required to build and run programs written in June language.
+
+### Prerequisites
+To work with the project, you need:
+- JDK 21+ (any recent JVM should work)
+- Git
+
+### Building the Compiler
+Clone the repository and build the project:
+```shell
+git clone https://github.com/danyazero/project_june.git
+cd project_june
+./gradlew build
+```
+
+### Compiling a Program
+You can compile your code from a source file in two ways:
+```shell
+java -jar build/libs/june-all.jar <filename>
+```
+or
+```shell
+bash june.sh <filename>
+```
+This will parse the source file and generate a `.class` file.
+
+### Running the program
+After compilation, run the generated class using the JVM:
+```shell
+java Main
+```
+Make sure the class name (`Main` in example) matches the entry class defined in your source code.
+
+### Minimal Example
+```Rust
+class Main {
+  pub fn* main(args []string) {
+    print!("Hello, world!")
+    return
+  }
+}
+```
+After compilation and execution, the output will be:
+```text
+Hello, world!
+```
 
 ## Classes
 To declare a `class`, use the class keyword:
@@ -10,6 +58,50 @@ class Main {
 }
 ```
 Classes are the main containers for functions.
+
+### Constructors
+You can define constructors using the `constructor` keyword and providing their signature.
+Multiple constructors (overloading) are supported.
+```java
+class Main {
+  constructor() {}
+
+  constructor(v string) {
+    print!("Hello, " + v + "!")
+  }
+
+  pub fn* main(args []string) {
+    main := Main { "Jhon" }
+    return
+  }
+}
+```
+After compilation and execution, the program outputs:
+```text
+Hello, Jhon!
+```
+Object creation uses the `{ ... }` syntax, which selects the appropriate constructor based on the arguments.
+
+### Virtual (Instance) Methods
+By default, functions declared inside a class are virtual (non-static) unless marked as static using fn*.
+```java
+class Main {
+  constructor() {}
+
+  pub fn sum(a int, b int) int {
+    return a + b
+  }
+
+  pub fn* main(args []string) {
+    main := Main { }
+    print!(main.sum(7, 3))
+    return
+  }
+}
+```
+In this example:
+- sum is a virtual method
+- It is called on a class instance
 
 ## Functions
 

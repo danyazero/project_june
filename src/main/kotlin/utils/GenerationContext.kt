@@ -22,7 +22,6 @@ class GenerationContext(
 
     fun defineMethod(signature: Signature) : String {
         val methodSignature = methodSignature(className ?: throw RuntimeException("Class name not defined"), signature)
-        println("Definition of method with signature - $methodSignature")
         classContext[methodSignature] = signature
 
         return methodSignature
